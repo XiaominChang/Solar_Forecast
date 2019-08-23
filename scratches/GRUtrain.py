@@ -83,7 +83,7 @@ def sequence( n_steps):
     print(np.shape(output))
     return np.array(input), np.array(output)
 
-def LSTM_training():
+def GRU_training():
     n_steps=16
     X, y= sequence(n_steps)
     train_X, train_y=X[:-1000,:],y[:-1000]
@@ -98,15 +98,15 @@ def LSTM_training():
     print(np.shape(train_X))
     print(np.shape(train_y))
     model=keras.models.Sequential()
-    model.add(keras.layers.LSTM(300, activation='relu', return_sequences=True, input_shape=(n_steps, 6)))
-    model.add(keras.layers.LSTM(200, activation='relu'))
+    model.add(keras.layers.GRU(300, activation='relu', return_sequences=True, input_shape=(n_steps, 6)))
+    model.add(keras.layers.GRU(200, activation='relu'))
     model.add(keras.layers.Dense(1))
     model.compile(optimizer='adam', loss='mse')
     print('start training')
     model.fit(train_X,train_y, epochs=1)
-    model.save('C:/Users/Xiaoming/Desktop/trainning_data/LSTM.h5')
+    model.save('C:/Users/Xiaoming/Desktop/trainning_data/GRU.h5')
 
-LSTM_training()
+GRU_training()
 
 
 
