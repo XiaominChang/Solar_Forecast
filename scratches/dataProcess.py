@@ -64,7 +64,7 @@ for data in dataset1:
     trainset1.append(list)
 print(len(trainset1))
 i=0
-while(i<len(trainset1)):
+
 
 
 

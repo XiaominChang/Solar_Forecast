@@ -1,7 +1,7 @@
-import pandas as pd
+#import pandas as pd
 import numpy as np
 import csv
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from math import sqrt
 from tensorflow import keras
 import os
@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 def dataReader():
-    file=open("C:/Users/Xiaoming/Desktop/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -103,8 +103,8 @@ def LSTM_training():
     model.add(keras.layers.Dense(1))
     model.compile(optimizer='adam', loss='mse')
     print('start training')
-    model.fit(train_X,train_y, epochs=1)
-    model.save('C:/Users/Xiaoming/Desktop/trainning_data/LSTM.h5')
+    model.fit(train_X,train_y, epochs=10)
+    model.save('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/LSTM.h5')
 
 LSTM_training()
 

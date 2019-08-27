@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
     y=np.array(output)
     return x, y'''
 def dataReader():
-    file=open("C:/Users/Xiaoming/Desktop/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -112,21 +112,22 @@ def SVRtrain():
     ###############################################################################
     # Fit regression model
     X,y=sequence( 16)
-
-    svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
-    #svr_lin = SVR(kernel='linear', C=1e3)
+    train_X, train_y=X[:-1000,:],y[:-1000]
+    test_X, test_y=X[-1000:,:], y[-1000:]
+    #svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
+    svr_lin = SVR(kernel='linear', C=1e3)
     #svr_poly = SVR(kernel='poly', C=1e3, degree=2)
     print('start trainning')
-    y_rbf = svr_rbf.fit(X, y).predict(X)
-    #y_lin = svr_lin.fit(X, y).predict(X)
+    #y_rbf = svr_rbf.fit(X, y).predict(X)
+    y_lin = svr_lin.fit(train_X, train_y)
     #y_poly = svr_poly.fit(X, y).predict(X)
     print('finish trainning')
-    joblib.dump(svr_rbf,'C:/Users/Xiaoming/Desktop/trainning_data/model_rbf.pkl')
-    #joblib.dump(svr_lin,'C:/Users/Xiaoming/Desktop/trainning_data/model_lin.pkl')
+    #joblib.dump(svr_rbf,'C:/Users/Xiaoming/Desktop/trainning_data/model_rbf.pkl')
+    joblib.dump(svr_lin,'/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/model_lin.pkl')
     #joblib.dump(svr_poly,'C:/Users/Xiaoming/Desktop/trainning_data/model_poly.pkl')
     ###############################################################################
     # look at the results
-    lw = 2
+    '''lw = 2
     plt.scatter(X[...,0], y, color='darkorange', label='data')
     plt.hold('on')
     plt.plot(X[...,0], y_rbf, color='blue', lw=lw, label='RBF model')
@@ -136,7 +137,7 @@ def SVRtrain():
     plt.ylabel('target')
     plt.title('Support Vector Regression')
     plt.legend()
-    plt.show()
+    plt.show()'''
 SVRtrain()
 print('finish')
 
