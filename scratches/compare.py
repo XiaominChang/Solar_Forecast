@@ -3,6 +3,7 @@ import joblib
 import numpy as np
 import csv
 from tensorflow import keras
+import matplotlib.pyplot as plt
 
 def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
@@ -75,6 +76,21 @@ def sequence( n_steps):
     print(np.shape(output))
     return np.array(input), np.array(output)
 
+def sequence_svm( n_steps):
+    x,y=dataReader()
+    input, output=list(), list()
+    for i in range(len(x)):
+        end=i+n_steps
+        if end>len(x)-1:
+            break
+        seq_x, seq_y= x[i:end, :], y[end]
+        data_in=np.hstack(seq_x)
+        input.append(data_in)
+        output.append(seq_y)
+    print(np.shape(input))
+    print(np.shape(output))
+    return np.array(input), np.array(output)
+
 #linear=joblib.load('C:/Users/Xiaoming/Desktop/trainning_data/model_lin001.pkl')
 #rbf=joblib.load('C:/Users/Xiaoming/Desktop/trainning_data/model_rbf.pkl')
 print("start")
@@ -85,16 +101,38 @@ print("start")
 #mse_linear1=mean_squared_error(Y[:1000], prediction1)
 n_steps = 16
 X, y = sequence(n_steps)
+X_svm ,y_svm=sequence_svm(n_steps)
 train_X, train_y = X[:-1000, :], y[:-1000]
 test_X, test_y = X[-1000:, :], y[-1000:]
+testx_svm,testy_svm=X_svm[-1000:, :], y_svm[-1000:]
+
 
 lstm=keras.models.load_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/LSTM.h5')
 gru=keras.models.load_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/GRU.h5')
+convlstm=keras.models.load_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/Covlstm.h5')
+rbf=joblib.load('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/model_rbf_final.pkl')
 
 mse_lstm=mean_squared_error(test_y, lstm.predict(test_X))
 mse_gru=mean_squared_error(test_y, gru.predict(test_X))
-gru.compile(loss='binary_crossentropy',optimizer='adam')
-test=gru.evaluate(test_X,test_y)
+#gru.compile(loss='binary_crossentropy',optimizer='adam')
+#test=gru.evaluate(test_X,test_y)
+mse_conv=mean_squared_error(test_y,convlstm.predict(np.reshape(test_X,[1000,n_steps,1,1,6])))
+mse_rbf=mean_squared_error(testy_svm,rbf.predict(testx_svm))
+y=lstm.predict(test_X)
+y0=lstm.predict(train_X)
 print(mse_lstm)
 print(mse_gru)
-print(test)
+print(mse_conv)
+print(mse_rbf)
+lw = 2
+plt.scatter(test_y, y, color='cornflowerblue', label='test')
+plt.plot(train_y, y0, color='orange', lw=2, label='train')
+#plt.hold('on')
+#plt.plot(test_y, y, color='navy', lw=lw, label='lstm model')
+
+plt.xlabel('real')
+plt.ylabel('prediction')
+plt.title('compare')
+plt.legend()
+plt.show()
+
