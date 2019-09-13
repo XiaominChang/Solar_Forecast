@@ -1,10 +1,6 @@
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-import joblib
+import matplotlib as plt
 import numpy as np
-import csv
-from tensorflow import keras
-import matplotlib.pyplot as plt
-import xgboost
+import sklearn
 
 def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
@@ -71,21 +67,20 @@ def sequence( n_steps):
         if end>len(x)-1:
             break
         seq_x, seq_y= x[i:end, :], y[end]
-        data_in=np.hstack(seq_x)
-        input.append(data_in)
+        input.append(seq_x)
         output.append(seq_y)
     print(np.shape(input))
     print(np.shape(output))
     return np.array(input), np.array(output)
 
-def xgBoost():
-    X,y=sequence( 16)
-    train_X, train_y=X[:-1000,:],y[:-1000]
-    test_X, test_y=X[-1000:,:], y[-1000:]
-    model=xgboost.XGBRegressor(max_depth=3, learning_rate=0.1, n_estimators=100,objective='reg:squarederror', booster='gbtree', n_jobs=4 )
-    train=[train_X,train_y]
-    test=[test_X,test_y]
-    model.fit(train_X,train_y,eval_metric=['auc','error'],eval_set=[train, test], verbose=True, early_stopping_rounds=10)
-    model.save_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/xgboost.model')
-
-xgboost()
+a=np.arange(1,25)
+b=a.reshape([4,3,2])
+print(b)
+h=np.array([1,2,3,4])
+g=h.reshape([4,1])
+print((g))
+#c=(b-b.mean(axis=0))/b.std(axis=0)
+#print(c)
+k,g=sklearn.utils.shuffle(b,g)
+print(k)
+print(g)

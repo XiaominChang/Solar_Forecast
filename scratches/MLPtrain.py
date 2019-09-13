@@ -1,21 +1,20 @@
-#import pandas as pd
+import pandas as pd
 import numpy as np
 import csv
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from math import sqrt
 from tensorflow import keras
 import os
-from keras_layer_normalization import LayerNormalization
+# model itself
 from loss import LossHistory
 from sklearn.utils import shuffle
-# model itself
 #from keras.models import Sequential
 #from keras.layers import LSTM
 #from keras.layers import Dense
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from sklearn.model_selection import train_test_split
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 history = LossHistory()
 def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
@@ -94,30 +93,49 @@ def sequence( n_steps):
     #print(np.shape(output))
     return np.array(input), np.array(output)
 
-
-def LSTM_training():
+def mlp_training():
     n_steps=16
     X, y= sequence(n_steps)
-    print(X.shape)
-    print(y.shape)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    train_X, train_y=shuffle(X,y, random_state=0)
+    #train_X, train_y=X[:-1000,:],y[:-1000]
+    #test_X, test_y=X[-1000:,:], y[-1000:]
     #input, out=X[8002:8003,:],y[8002:8003]
     #train_X=np.array(input)
     #train_y=np.array(out)
+    print(np.shape(train_X))
+    print(np.shape(train_y))
+    #model=keras.models.load_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/mlp01.h5')
+    #model.add(keras.layers.LSTM(6, activation='relu',return_sequences=True, input_shape=(n_steps, 6)))
+    #model.add(keras.layers.Dropout(0.2))
+    #model.add(keras.layers.LSTM(32, activation='relu',kernel_initializer='glorot_uniform',return_sequences=False, input_shape=(n_steps, 6)))
+    #model.add(keras.layers.Dropout(0.2))
+    #model.add(keras.layers.Flatten())
+    #model.add(keras.layers.LSTM(64, activation='tanh'))
+    train_X=train_X.reshape([32670,96])
     model=keras.models.Sequential()
-    #model.add(keras.layers.LayerNormalization())
-    model.add(keras.layers.LSTM(128, activation='relu', return_sequences=True, input_shape=(n_steps, 6),dropout=0.3, recurrent_dropout=0.3))
-    model.add(keras.layers.LayerNormalization())
-    model.add(keras.layers.LSTM(64, activation='relu',dropout=0.3, recurrent_dropout=0.3))
+    model.add(keras.layers.Dropout(0.3))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Dense(1))
-    model.compile(optimizer='adam', loss='mse')
+    model.add(keras.layers.Dense(400,activation='sigmoid', kernel_initializer='glorot_uniform'))
+    model.add(keras.layers.Dropout(0.4))
+    model.add(keras.layers.BatchNormalization())
+    model.add(keras.layers.Dense(300, activation='sigmoid', kernel_initializer='glorot_uniform'))
+    model.add(keras.layers.Dropout(0.4))
+    model.add(keras.layers.BatchNormalization())
+    model.add(keras.layers.Dense(200, activation='sigmoid', kernel_initializer='glorot_uniform'))
+    model.add(keras.layers.Dropout(0.3))
+    model.add(keras.layers.BatchNormalization())
+    model.add(keras.layers.Dense(1,activation='relu',kernel_initializer='glorot_uniform'))
+    #rms = keras.optimizers.RMSprop(lr=0.01, rho=0.9, epsilon=1e-08, decay=0.01)
+    #model.load_weights('C:/Users/chang/Documents/GitHub/Solar_Forecast/trainning_data/LSTM.h5')
+    #sgd=keras.optimizers.SGD(lr=1e-10, decay=0.1, momentum=0.8, nesterov=True)
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
     print('start training')
-    model.fit(X_train, y_train, epochs=500, batch_size=500)
-    model.save('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/LSTM.h5')
+    model.fit(train_X,train_y, epochs=65, batch_size=32,callbacks=[history], validation_split=0.3)
+    model.save('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/mlp02.h5')
 
-LSTM_training()
+mlp_training()
 
+history.loss_plot('epoch')
 
 
 

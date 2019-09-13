@@ -3,6 +3,8 @@ import numpy
 import joblib
 import numpy as np
 from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 
 '''def dataReader0000():
@@ -85,7 +87,9 @@ def dataReader():
 
 #x,y=dataReader()
 def sequence( n_steps):
-    x,y=dataReader()
+    X,Y=dataReader()
+    x=(X-X.mean(axis=0))/X.std(axis=0)
+    y=(Y-Y.mean(axis=0))/Y.std(axis=0)
     input, output=list(), list()
     for i in range(len(x)):
         end=i+n_steps
@@ -111,19 +115,31 @@ def SVRtrain():
 
     ###############################################################################
     # Fit regression model
-    X,y=sequence( 16)
-    train_X, train_y=X[:-1000,:],y[:-1000]
-    test_X, test_y=X[-1000:,:], y[-1000:]
-    #svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
-    svr_lin = SVR(kernel='linear', C=1e3)
+    n_steps=16
+    X, y= sequence(n_steps)
+    print(X.shape)
+    print(y.shape)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.01)
+    #svr_lin = SVR(kernel='linear', C=1e3)
     #svr_poly = SVR(kernel='poly', C=1e3, degree=2)
     print('start trainning')
-    #y_rbf = svr_rbf.fit(X, y).predict(X)
-    y_lin = svr_lin.fit(train_X, train_y)
+    svr_rbf.fit(X_train, y_train)
+    #y_lin = svr_lin.fit(train_X, train_y)
     #y_poly = svr_poly.fit(X, y).predict(X)
     print('finish trainning')
-    #joblib.dump(svr_rbf,'C:/Users/Xiaoming/Desktop/trainning_data/model_rbf.pkl')
-    joblib.dump(svr_lin,'/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/model_lin.pkl')
+    y=svr_rbf.predict(X_test)
+    y1=svr_rbf.predict(X_train)
+    mse_rbf_test = mean_squared_error(y_test,y )
+    mse_rbf_train=mean_squared_error(y_train,y1)
+    print('test mse is:\n')
+    print(mse_rbf_test)
+    print('trainning mse is:\n')
+    print(mse_rbf_train)
+
+    joblib.dump(svr_rbf,'/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/model_rbf.pkl')
+
+    #joblib.dump(svr_lin,'/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/model_lin.pkl')
     #joblib.dump(svr_poly,'C:/Users/Xiaoming/Desktop/trainning_data/model_poly.pkl')
     ###############################################################################
     # look at the results
@@ -138,6 +154,15 @@ def SVRtrain():
     plt.title('Support Vector Regression')
     plt.legend()
     plt.show()'''
+    plt.figure()
+    # loss
+    plt.plot(y, y_test, 'g', label='test loss')
+    plt.plot(y1, y_train, 'r', label='train loss')
+    plt.grid(True)
+    plt.xlabel('prediction')
+    plt.ylabel('solar output')
+    plt.legend(loc="upper right")
+    plt.show()
 SVRtrain()
 print('finish')
 

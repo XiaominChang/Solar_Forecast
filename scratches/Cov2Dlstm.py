@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from math import sqrt
 from tensorflow import keras
 import os
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 # model itself
 #from keras.models import Sequential
 #from keras.layers import LSTM

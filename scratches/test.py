@@ -138,8 +138,13 @@ def SVRtrain():
     plt.title('Support Vector Regression')
     plt.legend()
     plt.show()'''
-SVRtrain()
-print('finish')
+#SVRtrain()
+#print('finish')
 
+def datapro(*,a ,b):
+    c=a+b
+    return c
+arg={'a':5, 'b':6}
+print(datapro(**arg))
 
 
