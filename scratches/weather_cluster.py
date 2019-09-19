@@ -14,6 +14,7 @@ from sklearn.metrics import mean_squared_error, zero_one_loss
 import matplotlib.pyplot as plt
 import joblib
 import pandas as pd
+from sklearn.cluster import KMeans
 
 def dataReader():
     file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
@@ -27,7 +28,7 @@ def dataReader():
         #feature.append(float(row[5]))
         #feature.append(float(row[6]))
         feature.append(float(row[9]))
-        #feature.append(float(row[13]))
+        feature.append(float(row[13]))
         features.append(feature)
         #features.append(row[4:9])
     file.close()
@@ -56,19 +57,25 @@ X= sequence(n_steps)
 x_train_all, x_predict= train_test_split(X, test_size=0.10, random_state=100)
 
 def SOMcluster():
-    kohonen=algorithms.Kohonen(n_inputs=8, n_outputs=5, step=0.1, verbose=False)
-    kohonen.train(x_train_all, epochs=100)
+    kohonen=algorithms.Kohonen(n_inputs=12, n_outputs=4, step=0.3, verbose=False)
+    kohonen.train(x_train_all, epochs=300)
     result=kohonen.predict(X)
     print(result.shape)
     label_sum=np.sum(result, axis=0)
     print(label_sum)
-    pd_result=pd.DataFrame(result, columns=['label1', 'label2', 'label3', 'label4','label5'])
+    pd_result=pd.DataFrame(result, columns=['label1', 'label2', 'label3', 'label4'])
     pd_result.to_csv('/home/xcha8737/Downloads/cap/dataclean/labels.csv')
     #nonzero_index=np.argmax(result, 1)
     #pd_label=pd.DataFrame(nonzero_index, columns=['label_index'])
     #pd_label.to_csv('/home/xcha8737/Downloads/cap/dataclean/index.csv')
-
-
+    '''kmeans=KMeans(n_clusters=4, random_state=0)
+    kmeans.fit(X)
+    result = kmeans.predict(X)
+    print(result.shape)
+    label_sum = np.sum(result, axis=0)
+    print(label_sum)
+    pd_result = pd.DataFrame(result, columns=['label1'])
+    pd_result.to_csv('/home/xcha8737/Downloads/cap/dataclean/labels_test.csv')'''
 
 
 SOMcluster()
