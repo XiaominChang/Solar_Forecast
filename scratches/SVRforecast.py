@@ -34,67 +34,46 @@ from sklearn.model_selection import train_test_split
     y=np.array(output)
     return x, y'''
 def dataReader():
-    file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
     for row in reader:
+        if row[2]=='ghi':
+            continue
         feature=[]
-        #feature.append(row[1])
-        #feature.append(row[2])
+        feature.append(float(row[2]))
         feature.append(float(row[3]))
         feature.append(float(row[4]))
         feature.append(float(row[5]))
         feature.append(float(row[6]))
         feature.append(float(row[7]))
         feature.append(float(row[8]))
+        feature.append(float(row[9]))
+        feature.append(float(row[10]))
+        feature.append(float(row[11]))
+        feature.append(float(row[12]))
+        feature.append(float(row[13]))
+        feature.append(float(row[18]))
+
         features.append(feature)
         #features.append(row[4:9])
-        output.append(float(row[3]))
+        output.append(float(row[18]))
     file.close()
-    sep_in=[]
-    sep_out=[]
-    oct_in=[]
-    oct_out=[]
-    Nov_in=[]
-    Nov_out=[]
-    Dec_in=[]
-    Dec_out=[]
-    i=7416
-    print(features[0])
-    while(i>-1):
-        sep_in.append(features[i])
-        sep_out.append(output[i])
-        i-=1
-    i=16237
-    while(i>7416):
-        oct_in.append(features[i])
-        oct_out.append(output[i])
-        i-=1
-    i=24521
-    while(i>16237):
-        Nov_in.append(features[i])
-        Nov_out.append(output[i])
-        i-=1
-    i=len(features)-1
-    while(i>24521):
-        Dec_in.append(features[i])
-        Dec_out.append(output[i])
-        i-=1
-    input=sep_in + oct_in + Nov_in + Dec_in
-    output=sep_out+ oct_out +Nov_out+ Dec_out
-    print(len(input))
-    print(len(output))
-    X=np.array(input)
+    X=np.array(features)
     Y=np.array(output)
     return X, Y
 
-#x,y=dataReader()
+
 def sequence( n_steps):
     X,Y=dataReader()
-    x=(X-X.mean(axis=0))/X.std(axis=0)
-    y=(Y-Y.mean(axis=0))/Y.std(axis=0)
+    print(X.shape)
+    print(Y.shape)
+    x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
     input, output=list(), list()
+    #print(x[0:10])
+    #print(y[0:10])
     for i in range(len(x)):
         end=i+n_steps
         if end>len(x)-1:
@@ -103,10 +82,10 @@ def sequence( n_steps):
         data_in=np.hstack(seq_x)
         input.append(data_in)
         output.append(seq_y)
-    print(np.shape(input))
-    print(np.shape(output))
+    #print(np.shape(input))
+    #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=16
+n_steps=4
 X, y= sequence(n_steps)
 print(X.shape)
 print(y.shape)
@@ -157,7 +136,7 @@ def SVRtrain(argsDic):
 def SVRtrain_best(argsDic):
     model = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
     model.fit(x_train_all, y_train_all)
-    joblib.dump(model,'/home/xcha8737/Solar_Forecast/model_svr.pkl')
+    joblib.dump(model,'/home/xcha8737/Downloads/cap/dataclean/model_svr.pkl')
     return {'loss': get_tranformer_score(model), 'status': STATUS_OK}
 
 
@@ -170,7 +149,7 @@ def get_tranformer_score(tranformer):
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=10)
-best = fmin(SVRtrain, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(SVRtrain, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
 print('best :', best)
 MSE = SVRtrain_best(best)
 print('best :', best)

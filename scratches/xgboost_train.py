@@ -3,13 +3,13 @@ import joblib
 import csv
 from tensorflow import keras
 import matplotlib.pyplot as plt
-from hyperopt import fmin, tpe, hp, partial, Trials
+from hyperopt import fmin, tpe, hp, partial, Trials, STATUS_OK
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
-def dataReader():
+'''def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
@@ -82,10 +82,68 @@ def sequence( n_steps):
         output.append(seq_y)
     print(np.shape(input))
     print(np.shape(output))
-    return np.array(input), np.array(output)
+    return np.array(input), np.array(output)'''
+def dataReader():
+    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    reader=csv.reader(file)
+    features=[]
+    output=[]
+    for row in reader:
+        if row[2]=='ghi':
+            continue
+        feature=[]
+        feature.append(float(row[2]))
+        feature.append(float(row[3]))
+        feature.append(float(row[4]))
+        feature.append(float(row[5]))
+        feature.append(float(row[6]))
+        feature.append(float(row[7]))
+        feature.append(float(row[8]))
+        feature.append(float(row[9]))
+        feature.append(float(row[10]))
+        feature.append(float(row[11]))
+        feature.append(float(row[12]))
+        feature.append(float(row[13]))
+        feature.append(float(row[18]))
 
+        features.append(feature)
+        #features.append(row[4:9])
+        output.append(float(row[18]))
+    file.close()
+    X=np.array(features)
+    Y=np.array(output)
+    return X, Y
+
+
+def sequence( n_steps):
+    X,Y=dataReader()
+    print(X.shape)
+    print(Y.shape)
+    #x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    #y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
+    input, output=list(), list()
+    #print(x[0:10])
+    #print(y[0:10])
+    for i in range(len(x)):
+        end=i+n_steps
+        if end>len(x)-1:
+            break
+        seq_x, seq_y= x[i:end, :], y[end]
+        data_in=np.hstack(seq_x)
+        input.append(data_in)
+        output.append(seq_y)
+    #print(np.shape(input))
+    #print(np.shape(output))
+    return np.array(input), np.array(output)
+n_steps=4
+X, y= sequence(n_steps)
+print(X.shape)
+print(y.shape)
+
+
+'''
 def xgBoost():
-    '''n_steps=16
+ n_steps=16
     X, y= sequence(n_steps)
     print(X.shape)
     print(y.shape)
@@ -108,10 +166,7 @@ def xgBoost():
     plt.title('XGBoost MSE loss')
     plt.show()'''
 
-n_steps=16
-X, y= sequence(n_steps)
-print(X.shape)
-print(y.shape)
+
 x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
@@ -119,10 +174,10 @@ x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, te
 dtrain = xgb.DMatrix(data=x_train,label=y_train,missing=-999.0)
 dtest = xgb.DMatrix(data=x_test,label=y_test,missing=-999.0)
 
-evallist = [(dtest, 'eval'), (dtrain, 'train')]
+evallist = [(dtrain, 'train'),(dtest, 'eval')]
 
-space = {"max_depth": hp.randint("max_depth", 15),
-         "n_estimators": hp.randint("n_estimators", 300),
+space = {"max_depth": hp.randint("max_depth", 10),
+         "n_estimators": hp.randint("n_estimators", 200),
          'learning_rate': hp.uniform('learning_rate', 1e-3, 5e-1),
          "min_split_loss": hp.uniform("min_split_loss", 0, 1),
          "subsample": hp.uniform("subsample", 0,1),
@@ -134,7 +189,7 @@ space = {"max_depth": hp.randint("max_depth", 15),
          }
 def argsDict_tranform(argsDict, isPrint=False):
     argsDict["max_depth"] = argsDict["max_depth"] + 5
-    argsDict['n_estimators'] = argsDict['n_estimators'] + 150
+    argsDict['n_estimators'] = argsDict['n_estimators'] + 100
     argsDict["learning_rate"] = argsDict["learning_rate"] * 0.02 + 0.05
     argsDict["min_child_weight"] = argsDict["min_child_weight"] + 5
     return argsDict
@@ -148,7 +203,7 @@ def xgboost_factory(argsDict):
               'eta': argsDict['learning_rate'],
               'subsample': argsDict['subsample'],
               'min_child_weight': argsDict['min_child_weight'],
-              'objective': 'reg:linear',
+              'objective': 'reg:squarederror',
               'verbosity': 0,
               'gamma': argsDict['min_split_loss'],
               'colsample_bytree': argsDict['colsample_bytree'],
@@ -161,36 +216,94 @@ def xgboost_factory(argsDict):
     params['eval_metric'] = ['rmse']
 
     xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
+    loss=get_tranformer_score(xrf)
 
-    return get_tranformer_score(xrf)
+    return {'loss': loss, 'status': STATUS_OK}
 
 def get_tranformer_score(tranformer):
     xrf = tranformer
     dpredict = xgb.DMatrix(x_predict)
     prediction = xrf.predict(dpredict, ntree_limit=xrf.best_ntree_limit)
-
     return mean_squared_error(y_predict, prediction)
 
 
+def xgbest_train(argsDict):
+    argsDict = argsDict_tranform(argsDict)
+
+    params = {'nthread': 4,
+              'max_depth': argsDict['max_depth'],
+              'n_estimators': argsDict['n_estimators'],
+              'eta': argsDict['learning_rate'],
+              'subsample': argsDict['subsample'],
+              'min_child_weight': argsDict['min_child_weight'],
+              'objective': 'reg:squarederror',
+              'verbosity': 0,
+              'gamma': argsDict['min_split_loss'],
+              'colsample_bytree': argsDict['colsample_bytree'],
+              'alpha': 0,
+              'lambda': argsDict['lambda'],
+              'scale_pos_weight': 0,
+              'seed': 100,
+              'missing': -999,
+              }
+    params['eval_metric'] = ['rmse']
+
+    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
+    loss=get_tranformer_score(xrf)
+    xrf.save_model('/home/xcha8737/Downloads/cap/dataclean/xgboost_test.model')
+    return {'loss': loss, 'status': STATUS_OK}
 
 
-def argsDict_tranform(argsDict, isPrint=False):
-    argsDict["max_depth"] = argsDict["max_depth"] + 5
-    argsDict['n_estimators'] = argsDict['n_estimators'] + 150
-    argsDict["learning_rate"] = argsDict["learning_rate"] * 0.02 + 0.05
-    argsDict["min_child_weight"] = argsDict["min_child_weight"] + 5
-    return argsDict
 trials = Trials()
-algo = partial(tpe.suggest, n_startup_jobs=1)
-best = fmin(xgboost_factory, space, algo=algo, max_evals=50, pass_expr_memo_ctrl=None, trials=trials)
-RMSE = xgboost_factory(best)
+algo = partial(tpe.suggest, n_startup_jobs=10)
+best = fmin(xgboost_factory, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
+MSE = xgbest_train(best)
 print('best :', best)
 print('best param after transform :')
-argsDict_tranform(best,isPrint=True)
-print('rmse of the best xgboost:', np.sqrt(RMSE))
-print ('trials:')
-for trial in trials.trials[:2]:
-    print (trial)
+print(argsDict_tranform(best,isPrint=True))
+print('\nrmse of the best xgboost:', np.sqrt(MSE['loss']))
+xs0 = [t['misc']['vals']['learning_rate'][0] for t in trials.trials]
+xs1 = [t['misc']['vals']['n_estimators'][0] for t in trials.trials]
+xs2 = [t['misc']['vals']['max_depth'][0] for t in trials.trials]
+xs3=[t['misc']['vals']['min_child_weight'][0] for t in trials.trials]
+ys=[t['result']['loss'] for t in trials.trials]
+
+
+plt.figure()
+plt.scatter(xs0, ys,  s=20, color='darkorange', linewidth=0.01, alpha=0.75, label='learning rate')
+plt.grid(True)
+plt.xlabel('learning rate')
+plt.ylabel('loss')
+plt.legend(loc="upper right")
+plt.show()
+
+plt.figure()
+plt.scatter(xs1, ys, s=20,  color='r',linewidth=0.01, alpha=0.75, label='n_estimators')
+#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+plt.grid(True)
+plt.xlabel('n_estimatiors')
+plt.ylabel('loss')
+plt.legend(loc="upper right")
+plt.show()
+
+plt.figure()
+plt.scatter(xs2, ys, s=20, color='blue', linewidth=0.01, alpha=0.75, label='max_depth')
+#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+plt.grid(True)
+plt.xlabel('max_depth')
+plt.ylabel('loss')
+plt.legend(loc="upper right")
+plt.show()
+
+plt.figure()
+plt.scatter(xs3, ys, s=20, color='g', linewidth=0.01, alpha=0.75, label='min_child_weight')
+#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+plt.grid(True)
+plt.xlabel('min_child_weight')
+plt.ylabel('loss')
+plt.legend(loc="upper right")
+plt.show()
+
 
 
 
