@@ -34,7 +34,7 @@ from sklearn.model_selection import train_test_split
     y=np.array(output)
     return x, y'''
 def dataReader():
-    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -136,7 +136,7 @@ def SVRtrain(argsDic):
 def SVRtrain_best(argsDic):
     model = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
     model.fit(x_train_all, y_train_all)
-    joblib.dump(model,'/home/xcha8737/Downloads/cap/dataclean/model_svr.pkl')
+    joblib.dump(model,'C:/Users/chang/Documents/GitHub/dataclean/dataclean/model_svr.pkl')
     return {'loss': get_tranformer_score(model), 'status': STATUS_OK}
 
 
@@ -160,16 +160,6 @@ print ('trials:')
 #    print (trial)
 
 xs0 = [t['misc']['vals']['C'][0] for t in trials.trials]
-'''xs1=[]
-for t in trials.trials:
-    if t['misc']['vals']['kernel_type'][0] =='rbf':
-        xs1.append(0)
-    elif t['misc']['vals']['kernel_type'][0] =='linear':
-        xs1.append(1)
-    else:
-        xs1.append(2)'''
-
-'''xs1 = [t['misc']['vals']['kernel_type'][0] for t in trials.trials]'''
 xs2 = [t['misc']['vals']['gamma'][0] for t in trials.trials]
 xs3=[t['misc']['vals']['degree'][0] for t in trials.trials]
 ys=[t['result']['loss'] for t in trials.trials]

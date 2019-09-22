@@ -84,7 +84,7 @@ def sequence( n_steps):
     print(np.shape(output))
     return np.array(input), np.array(output)'''
 def dataReader():
-    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -119,8 +119,8 @@ def sequence( n_steps):
     X,Y=dataReader()
     print(X.shape)
     print(Y.shape)
-    #x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
-    #y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
+    x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
     input, output=list(), list()
     #print(x[0:10])
     #print(y[0:10])
@@ -250,7 +250,7 @@ def xgbest_train(argsDict):
 
     xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
     loss=get_tranformer_score(xrf)
-    xrf.save_model('/home/xcha8737/Downloads/cap/dataclean/xgboost_test.model')
+    xrf.save_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/xgboost_test.model')
     return {'loss': loss, 'status': STATUS_OK}
 
 

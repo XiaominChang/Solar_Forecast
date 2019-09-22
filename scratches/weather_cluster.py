@@ -15,9 +15,10 @@ import matplotlib.pyplot as plt
 import joblib
 import pandas as pd
 from sklearn.cluster import KMeans
+from SOM import Som_simple_zybb as som
 
 def dataReader():
-    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     for row in reader:
@@ -54,17 +55,17 @@ def sequence( n_steps):
 
 n_steps=4
 X= sequence(n_steps)
-x_train_all, x_predict= train_test_split(X, test_size=0.10, random_state=100)
+x_train_all, x_predict= train_test_split(X, test_size=0.30, random_state=100)
 
 def SOMcluster():
-    kohonen=algorithms.Kohonen(n_inputs=12, n_outputs=4, step=0.3, verbose=False)
+    kohonen=algorithms.Kohonen(n_inputs=12, n_outputs=4, step=0.9, verbose=True)
     kohonen.train(x_train_all, epochs=300)
-    result=kohonen.predict(X)
+    result=kohonen.predict(x_predict)
     print(result.shape)
     label_sum=np.sum(result, axis=0)
     print(label_sum)
     pd_result=pd.DataFrame(result, columns=['label1', 'label2', 'label3', 'label4'])
-    pd_result.to_csv('/home/xcha8737/Downloads/cap/dataclean/labels.csv')
+    pd_result.to_csv('C:/Users/chang/Documents/GitHub/dataclean/dataclean/labels.csv')
     #nonzero_index=np.argmax(result, 1)
     #pd_label=pd.DataFrame(nonzero_index, columns=['label_index'])
     #pd_label.to_csv('/home/xcha8737/Downloads/cap/dataclean/index.csv')
@@ -76,6 +77,9 @@ def SOMcluster():
     print(label_sum)
     pd_result = pd.DataFrame(result, columns=['label1'])
     pd_result.to_csv('/home/xcha8737/Downloads/cap/dataclean/labels_test.csv')'''
+    #som_zybb = som(category)
+    #som_zybb.initial_output_layer()
+    #som_zybb.som_looper()
 
 
 SOMcluster()

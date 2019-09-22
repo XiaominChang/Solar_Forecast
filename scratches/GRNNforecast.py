@@ -16,7 +16,7 @@ from sklearn.metrics import mean_squared_error, zero_one_loss
 import matplotlib.pyplot as plt
 import joblib
 def dataReader():
-    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -91,7 +91,7 @@ def GRNNtrain(argsDic):
 def GRNNtrain_best(argsDic):
     model=algorithms.GRNN(std=argsDic['std'], verbose=True)
     model.train(x_train_all,y_train_all)
-    with open('network-storage.dill', 'wb') as f:
+    with open('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRNN.dill', 'wb') as f:
         dill.dump(model,f)
     return {'loss': get_tranformer_score(model), 'status': STATUS_OK}
 
@@ -109,7 +109,7 @@ def get_tranformer_score(tranformer):
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=10)
-best = fmin(GRNNtrain, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(GRNNtrain, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
 print('best :', best)
 MSE = GRNNtrain_best(best)
 print('best :', best)

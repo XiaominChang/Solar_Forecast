@@ -100,7 +100,7 @@ def sequence( n_steps):
     #print(np.shape(output))
     return np.array(input), np.array(output)'''
 def dataReader():
-    file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -134,8 +134,8 @@ def sequence( n_steps):
     X,Y=dataReader()
     print(X.shape)
     print(Y.shape)
-    x=(X-X.mean(axis=0))/X.std(axis=0)
-    y=(Y-Y.mean(axis=0))/Y.std(axis=0)
+    x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
     input, output=list(), list()
     #print(x[0:10])
     #print(y[0:10])
@@ -225,7 +225,7 @@ def GRU_training_best(argsDic):
     model.compile(optimizer=adam, loss='mean_squared_error', metrics=['mae'])
     print('start training')
     model.fit(x_train_all,y_train_all, epochs=argsDic['epochs'], batch_size=argsDic['batch_size'], validation_split=0.2)
-    model.save('/home/xcha8737/Downloads/cap/dataclean/GRU.h5')
+    model.save('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRU.h5')
     return {'loss':get_tranformer_score(model), 'status':STATUS_OK}
 
 
@@ -234,7 +234,7 @@ def GRU_training_best(argsDic):
 #history.loss_plot('epoch')
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=10)
-best = fmin(GRU_training, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(GRU_training, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
 MSE = GRU_training_best(best)
 print('best :', best)
 print('best param after transform :')
