@@ -256,7 +256,7 @@ def xgbest_train(argsDict):
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=10)
-best = fmin(xgboost_factory, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(xgboost_factory, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
 MSE = xgbest_train(best)
 print('best :', best)
 print('best param after transform :')

@@ -116,29 +116,31 @@ print(x)'''
 result1=xgboost.predict(dpredict)
 print(result1.shape)
 print(mean_squared_error(y_predict, result1))
+result1=result1.reshape(-1,1)
 
 result2=grnn.predict(x_predict)
 print(result2.shape)
+print(mean_squared_error(y_predict, result2))
 
 result3=svr.predict(x_predict)
 print(result3.shape)
+print(mean_squared_error(y_predict, result3))
+result3=result3.reshape(-1,1)
+
+
+result_predict=np.hstack([result1,result2,result3])
+
+print(result_predict.shape)
+
+
+mixed=keras.models.load_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/mixed_model.h5')
+result4=mixed.predict(result_predict)
+print(mean_squared_error(y_predict, result4))
 
 
 
 
 
-space = {'layer1_output': hp.randint('layer1_output', 50),
-         'batch_size': hp.randint('batch_size', 100),
-         "lr": hp.uniform('lr', 1e-9, 1e-3),
-         "decay": hp.uniform('decay', 1e-9, 1e-3),
-         'epochs': hp.randint('epochs', 200),
-         }
-
-def argsDict_tranform(argsDict):
-    argsDict["layer1_output"] = argsDict["layer1_output"] + 5
-    argsDict['batch_size']=argsDict['batch_size']+32
-    argsDict['epochs']=argsDict['epochs']+50
-    return argsDict
 
 '''def weight_training(argsDic):
     argsDic=argsDict_tranform(argsDic)
