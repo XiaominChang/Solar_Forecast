@@ -115,8 +115,8 @@ def sequence( n_steps):
     X,Y=dataReader()
     print(X.shape)
     print(Y.shape)
-    x=(X-X.mean(axis=0))/X.std(axis=0)
-    y=(Y-Y.mean(axis=0))/Y.std(axis=0)
+    x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
     input, output=list(), list()
     #print(x[0:10])
     #print(y[0:10])
@@ -130,7 +130,7 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=4
+n_steps=2
 
 X, y= sequence(n_steps)
 print(X.shape)

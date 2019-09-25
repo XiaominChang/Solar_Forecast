@@ -1,22 +1,22 @@
-import numpy as np
-from sklearn import datasets, preprocessing
-from neupy import algorithms
-import csv
-import dill
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import joblib
 import math
-from math import sqrt
-import keras
-import os
-from keras_layer_normalization import LayerNormalization
-from loss import LossHistory
-from sklearn.utils import shuffle
-from hyperopt import fmin, tpe, hp, partial, Trials, STATUS_OK, STATUS_FAIL
+import csv
+from tensorflow import keras
+import matplotlib.pyplot as plt
+from hyperopt import fmin, tpe, hp, partial, Trials, STATUS_OK
+import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
-import matplotlib.pyplot as plt
-import joblib
-import pandas as pd
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+import xgboost as xgb
+import dill
+import graphviz
 import shap
+import pandas as pd
+
+from matplotlib.backends.backend_pdf import PdfPages
 def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
@@ -36,6 +36,7 @@ def dataReader():
         feature.append(float(row[9]))
         feature.append(float(row[10]))
         feature.append(float(row[11]))
+
         feature.append(float(row[12]))
         feature.append(float(row[13]))
         #feature.append(float(row[18]))
@@ -78,8 +79,6 @@ print(X.shape)
 print(y.shape)
 
 
-
-
 x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
@@ -90,51 +89,27 @@ x_train=pd.DataFrame(x_train,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni
 x_test=pd.DataFrame(x_test,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith","azimuth", "cloud_opacity"])
 
 
-space = {'std': hp.uniform('std', 0.1, 1.0)}
-
-def GRNNtrain(argsDic):
-    print('std value is:', argsDic['std'])
-    model=algorithms.GRNN(std=argsDic['std'], verbose=True)
-    model.train(x_train_all,y_train_all)
-    loss=get_tranformer_score(model)
-    if(loss==10):
-        return {'loss':loss, 'status':STATUS_FAIL}
-    #model.save('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/GRU.h5')
-    else:
-        return {'loss':loss, 'status':STATUS_OK}
-
-
-
-def GRNNtrain_best(argsDic):
-    model=algorithms.GRNN(std=argsDic['std'], verbose=True)
-    model.train(x_train_all,y_train_all)
-    shap_value = shap.KernelExplainer(model.predict(), x_train_all).shap_values(x_train_all)
-    shap.summary_plot(shap_value, x_train_all, plot_type="bar")
-    with open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN.dill', 'wb') as f:
-        dill.dump(model,f)
-    return {'loss': get_tranformer_score(model), 'status': STATUS_OK}
-
-
-
-def get_tranformer_score(tranformer):
-    grnn = tranformer
-    prediction = grnn.predict(x_predict)
-    for i in prediction:
-        if math.isnan(i[0]):
-            print('nan number is found')
-            return 10
-    return mean_squared_error(y_predict, prediction)
-
-
-trials = Trials()
-algo = partial(tpe.suggest, n_startup_jobs=20)
-best = fmin(GRNNtrain, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
-print('best :', best)
-MSE = GRNNtrain_best(best)
-print('best :', best)
-print('rmse of the best svr:', np.sqrt(MSE['loss']))
-
-
-
-
+dtrain = xgb.DMatrix(data=x_train,label=y_train,missing=-999.0,feature_names=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+dtest = xgb.DMatrix(data=x_test,label=y_test,missing=-999.0, feature_names=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+xgboost=xgb.Booster()
+xgboost.load_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost.model')
+f=open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN.dill', 'rb')
+grnn=dill.load(f)
+svr=joblib.load('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr.pkl')
+#xgboost.feature_names=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"]
+#fig,ax = plt.subplots(figsize=(15,15))
+#plt.figure()
+#print(xgboost.feature_names)
+#print(xgboost.feature_types)
+#xgb.plot_importance(xgboost)
+#xgb.plot_tree(xgboost)
+#plt.show()
+pdf=PdfPages('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/shap2.pdf')
+#shap_value = shap.TreeExplainer(xgboost).shap_values(x_train_all)
+#shap.summary_plot(shap_value, x_train_all, plot_type="bar")
+shap_value=shap.KernelExplainer(svr.predict, x_predict).shap_values(x_train_all)
+shap.summary_plot(shap_value, x_train_all, plot_type="bar")
+#fig=plt.gcf()
+#pdf.savefig(fig)
+#plt.show()
 

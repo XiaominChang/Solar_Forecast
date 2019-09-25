@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 import xgboost as xgb
 import dill
 def dataReader():
-    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -33,7 +33,7 @@ def dataReader():
         feature.append(float(row[11]))
         feature.append(float(row[12]))
         feature.append(float(row[13]))
-        feature.append(float(row[18]))
+        #feature.append(float(row[18]))
 
         features.append(feature)
         #features.append(row[4:9])
@@ -85,14 +85,14 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)'''
-n_steps=4
+n_steps=1
 X, y= sequence(n_steps)
 xgboost=xgb.Booster()
-f=open('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRNN.dill', 'rb')
-xgboost.load_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/xgboost_test.model')
+f=open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN.dill', 'rb')
+xgboost.load_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost_test.model')
 grnn=dill.load(f)
 #gru=keras.models.load_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRU.h5')
-svr=joblib.load('C:/Users/chang/Documents/GitHub/dataclean/dataclean/model_svr.pkl')
+svr=joblib.load('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr.pkl')
 
 x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
@@ -133,7 +133,7 @@ result_predict=np.hstack([result1,result2,result3])
 print(result_predict.shape)
 
 
-mixed=keras.models.load_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/mixed_model.h5')
+mixed=keras.models.load_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/mixed_model.h5')
 result4=mixed.predict(result_predict)
 print(mean_squared_error(y_predict, result4))
 

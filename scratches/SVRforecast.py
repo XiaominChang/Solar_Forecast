@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+import pandas as pd
 
 '''def dataReader0000():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
@@ -34,7 +35,7 @@ from sklearn.model_selection import train_test_split
     y=np.array(output)
     return x, y'''
 def dataReader():
-    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -54,7 +55,7 @@ def dataReader():
         feature.append(float(row[11]))
         feature.append(float(row[12]))
         feature.append(float(row[13]))
-        feature.append(float(row[18]))
+        #feature.append(float(row[18]))
 
         features.append(feature)
         #features.append(row[4:9])
@@ -85,13 +86,32 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=4
+'''n_steps=1
 X, y= sequence(n_steps)
 print(X.shape)
 print(y.shape)
 x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
 
+x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)'''
+
+X,Y=dataReader()
+X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+print(X.shape)
+print(y.shape)
+
+
+
+
+x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+
+x_train_all=pd.DataFrame(x_train_all,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+x_predict=pd.DataFrame(x_predict,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+x_train=pd.DataFrame(x_train,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+x_test=pd.DataFrame(x_test,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith","azimuth", "cloud_opacity"])
+
 space = {'C': hp.uniform('C', 0, 10.0),
         'kernel': hp.choice('kernel', ['rbf']),
         'gamma': hp.uniform('gamma', 0, 20.0),
@@ -136,7 +156,7 @@ def SVRtrain(argsDic):
 def SVRtrain_best(argsDic):
     model = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
     model.fit(x_train_all, y_train_all)
-    joblib.dump(model,'C:/Users/chang/Documents/GitHub/dataclean/dataclean/model_svr.pkl')
+    joblib.dump(model,'/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr.pkl')
     return {'loss': get_tranformer_score(model), 'status': STATUS_OK}
 
 

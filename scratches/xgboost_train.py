@@ -9,6 +9,37 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+import pandas as pd
+import graphviz
+import shap
+
+'''
+def xgBoost():
+ n_steps=16
+    X, y= sequence(n_steps)
+    print(X.shape)
+    print(y.shape)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    model=xgb.XGBRegressor(max_depth=3, learning_rate=0.3,verbosity=2, n_estimators=200,objective='reg:squarederror', booster='gbtree', n_jobs=4, subsample=0.7, colsample_bytree=0.7 )
+    train=(X_train, y_train)
+    test=(X_test, y_test)
+    model.fit(X_train, y_train, eval_metric=['rmse'],eval_set=[train, test], verbose=True, early_stopping_rounds=10,callbacks=None)
+    model.save_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/xgboost.model')
+    results=model.evals_result()
+    epochs=len(results['validation_0']['rmse'])
+    x_axis=range(0,epochs)
+    fig, ax=plt.subplots()
+
+    ax.plot(x_axis, results['validation_0']['rmse'], label='Train')
+    ax.plot(x_axis, results['validation_1']['rmse'], label='Test')
+    ax.legend()
+    plt.grid(True)
+    plt.ylabel('Error')
+    plt.title('XGBoost MSE loss')
+    plt.show()'''
+
+
+from matplotlib.backends.backend_pdf import PdfPages
 '''def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
@@ -84,7 +115,7 @@ def sequence( n_steps):
     print(np.shape(output))
     return np.array(input), np.array(output)'''
 def dataReader():
-    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -102,9 +133,10 @@ def dataReader():
         feature.append(float(row[9]))
         feature.append(float(row[10]))
         feature.append(float(row[11]))
+
         feature.append(float(row[12]))
         feature.append(float(row[13]))
-        feature.append(float(row[18]))
+        #feature.append(float(row[18]))
 
         features.append(feature)
         #features.append(row[4:9])
@@ -135,46 +167,32 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=4
-X, y= sequence(n_steps)
+#n_steps=1
+#X, y= sequence(n_steps)
+X,Y=dataReader()
+X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
 print(X.shape)
 print(y.shape)
 
 
-'''
-def xgBoost():
- n_steps=16
-    X, y= sequence(n_steps)
-    print(X.shape)
-    print(y.shape)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-    model=xgb.XGBRegressor(max_depth=3, learning_rate=0.3,verbosity=2, n_estimators=200,objective='reg:squarederror', booster='gbtree', n_jobs=4, subsample=0.7, colsample_bytree=0.7 )
-    train=(X_train, y_train)
-    test=(X_test, y_test)
-    model.fit(X_train, y_train, eval_metric=['rmse'],eval_set=[train, test], verbose=True, early_stopping_rounds=10,callbacks=None)
-    model.save_model('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/xgboost.model')
-    results=model.evals_result()
-    epochs=len(results['validation_0']['rmse'])
-    x_axis=range(0,epochs)
-    fig, ax=plt.subplots()
-
-    ax.plot(x_axis, results['validation_0']['rmse'], label='Train')
-    ax.plot(x_axis, results['validation_1']['rmse'], label='Test')
-    ax.legend()
-    plt.grid(True)
-    plt.ylabel('Error')
-    plt.title('XGBoost MSE loss')
-    plt.show()'''
 
 
 x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
 
-dtrain = xgb.DMatrix(data=x_train,label=y_train,missing=-999.0)
-dtest = xgb.DMatrix(data=x_test,label=y_test,missing=-999.0)
+x_train_all=pd.DataFrame(x_train_all,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+x_predict=pd.DataFrame(x_predict,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+x_train=pd.DataFrame(x_train,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+x_test=pd.DataFrame(x_test,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith","azimuth", "cloud_opacity"])
+
+
+dtrain = xgb.DMatrix(data=x_train,label=y_train,missing=-999.0,feature_names=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
+dtest = xgb.DMatrix(data=x_test,label=y_test,missing=-999.0, feature_names=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
 
 evallist = [(dtrain, 'train'),(dtest, 'eval')]
+#evallist = [(dtrain, 'train'),(dtest, 'eval')]
 
 space = {"max_depth": hp.randint("max_depth", 10),
          "n_estimators": hp.randint("n_estimators", 200),
@@ -212,10 +230,11 @@ def xgboost_factory(argsDict):
               'scale_pos_weight': 0,
               'seed': 100,
               'missing': -999,
+              "booster" : 'gbtree'
               }
     params['eval_metric'] = ['rmse']
 
-    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
+    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=50)
     loss=get_tranformer_score(xrf)
 
     return {'loss': loss, 'status': STATUS_OK}
@@ -245,17 +264,26 @@ def xgbest_train(argsDict):
               'scale_pos_weight': 0,
               'seed': 100,
               'missing': -999,
+              "booster": 'gbtree'
               }
     params['eval_metric'] = ['rmse']
 
-    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
+    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=50)
     loss=get_tranformer_score(xrf)
-    xrf.save_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/xgboost_test.model')
+    xrf.save_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost.model')
+    print(xrf.feature_names)
+    xgb.plot_importance(xrf)
+    plt.show()
+    shap_value=shap.TreeExplainer(xrf).shap_values(x_train_all)
+    shap.summary_plot(shap_value, x_train_all, plot_type="bar")
+    #fig=plt.gcf()
+    plt.show()
+
     return {'loss': loss, 'status': STATUS_OK}
 
 
 trials = Trials()
-algo = partial(tpe.suggest, n_startup_jobs=10)
+algo = partial(tpe.suggest, n_startup_jobs=20)
 best = fmin(xgboost_factory, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
 MSE = xgbest_train(best)
 print('best :', best)
