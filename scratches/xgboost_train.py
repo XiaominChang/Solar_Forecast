@@ -234,7 +234,7 @@ def xgboost_factory(argsDict):
               }
     params['eval_metric'] = ['rmse']
 
-    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=50)
+    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
     loss=get_tranformer_score(xrf)
 
     return {'loss': loss, 'status': STATUS_OK}
@@ -268,23 +268,23 @@ def xgbest_train(argsDict):
               }
     params['eval_metric'] = ['rmse']
 
-    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=50)
+    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
     loss=get_tranformer_score(xrf)
     xrf.save_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost.model')
-    print(xrf.feature_names)
+    '''print(xrf.feature_names)
     xgb.plot_importance(xrf)
     plt.show()
     shap_value=shap.TreeExplainer(xrf).shap_values(x_train_all)
     shap.summary_plot(shap_value, x_train_all, plot_type="bar")
     #fig=plt.gcf()
-    plt.show()
+    plt.show()'''
 
     return {'loss': loss, 'status': STATUS_OK}
 
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=20)
-best = fmin(xgboost_factory, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(xgboost_factory, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
 MSE = xgbest_train(best)
 print('best :', best)
 print('best param after transform :')

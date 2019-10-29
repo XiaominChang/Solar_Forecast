@@ -100,7 +100,7 @@ def sequence( n_steps):
     #print(np.shape(output))
     return np.array(input), np.array(output)'''
 def dataReader():
-    file=open("C:/Users/chang/Documents/GitHub/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
+    file=open("/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
     features=[]
     output=[]
@@ -149,7 +149,7 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=4
+n_steps=6
 X, y= sequence(n_steps)
 print(X.shape)
 print(y.shape)
@@ -185,7 +185,7 @@ def GRU_training(argsDic):
     print(argsDic['batch_size'])
     model=keras.models.Sequential()
     model.add(LayerNormalization())
-    model.add(keras.layers.GRU(argsDic['layer1_output'], activation='relu', return_sequences=True, input_shape=(n_steps, 13),dropout=argsDic['layer1_dropout'], recurrent_dropout=argsDic['layer1_rdropout']))
+    model.add(keras.layers.GRU(argsDic['layer1_output'], activation='relu', return_sequences=True, input_shape=(n_steps, 12),dropout=argsDic['layer1_dropout'], recurrent_dropout=argsDic['layer1_rdropout']))
     model.add(LayerNormalization())
     model.add(keras.layers.GRU(argsDic['layer2_output'], activation='relu',dropout=argsDic['layer2_dropout'], recurrent_dropout=argsDic['layer2_rdropout']))
     model.add(keras.layers.Dropout(argsDic['layer3_dropout']))
@@ -215,7 +215,7 @@ def GRU_training_best(argsDic):
     argsDic=argsDict_tranform(argsDic)
     model=keras.models.Sequential()
     model.add(LayerNormalization())
-    model.add(keras.layers.GRU(argsDic['layer1_output'], activation='relu', return_sequences=True, input_shape=(n_steps, 13),dropout=argsDic['layer1_dropout'], recurrent_dropout=argsDic['layer1_rdropout']))
+    model.add(keras.layers.GRU(argsDic['layer1_output'], activation='relu', return_sequences=True, input_shape=(n_steps, 12),dropout=argsDic['layer1_dropout'], recurrent_dropout=argsDic['layer1_rdropout']))
     model.add(LayerNormalization())
     model.add(keras.layers.GRU(argsDic['layer2_output'], activation='relu',dropout=argsDic['layer2_dropout'], recurrent_dropout=argsDic['layer2_rdropout']))
     model.add(keras.layers.Dropout(argsDic['layer3_dropout']))
@@ -225,7 +225,7 @@ def GRU_training_best(argsDic):
     model.compile(optimizer=adam, loss='mean_squared_error', metrics=['mae'])
     print('start training')
     model.fit(x_train_all,y_train_all, epochs=argsDic['epochs'], batch_size=argsDic['batch_size'], validation_split=0.2)
-    model.save('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRU.h5')
+    model.save('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRU.h5')
     return {'loss':get_tranformer_score(model), 'status':STATUS_OK}
 
 
@@ -233,8 +233,8 @@ def GRU_training_best(argsDic):
 #GRU_training()
 #history.loss_plot('epoch')
 trials = Trials()
-algo = partial(tpe.suggest, n_startup_jobs=10)
-best = fmin(GRU_training, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
+algo = partial(tpe.suggest, n_startup_jobs=20)
+best = fmin(GRU_training, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
 MSE = GRU_training_best(best)
 print('best :', best)
 print('best param after transform :')

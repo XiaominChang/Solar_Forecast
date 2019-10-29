@@ -108,8 +108,9 @@ def GRNNtrain(argsDic):
 def GRNNtrain_best(argsDic):
     model=algorithms.GRNN(std=argsDic['std'], verbose=True)
     model.train(x_train_all,y_train_all)
-    shap_value = shap.KernelExplainer(model.predict(), x_train_all).shap_values(x_train_all)
-    shap.summary_plot(shap_value, x_train_all, plot_type="bar")
+
+    #shap_value = shap.KernelExplainer(model.predict(), x_train_all).shap_values(x_train_all)
+    #shap.summary_plot(shap_value, x_train_all, plot_type="bar")
     with open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN.dill', 'wb') as f:
         dill.dump(model,f)
     return {'loss': get_tranformer_score(model), 'status': STATUS_OK}
@@ -128,7 +129,7 @@ def get_tranformer_score(tranformer):
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=20)
-best = fmin(GRNNtrain, space, algo=algo, max_evals=200, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(GRNNtrain, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
 print('best :', best)
 MSE = GRNNtrain_best(best)
 print('best :', best)
