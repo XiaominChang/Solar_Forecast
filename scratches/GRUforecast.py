@@ -13,7 +13,9 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import matplotlib.pyplot as plt
 import math
-
+import time
+from math import sqrt
+from sklearn.metrics import mean_squared_error, zero_one_loss,mean_absolute_error,r2_score
 
 # model itself
 #from keras.models import Sequential
@@ -131,11 +133,11 @@ def dataReader():
 
 
 def sequence( n_steps):
-    X,Y=dataReader()
-    print(X.shape)
-    print(Y.shape)
-    x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
-    y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
+    x,y=dataReader()
+    # print(X.shape)
+    # print(Y.shape)
+    # x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    # y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
     input, output=list(), list()
     #print(x[0:10])
     #print(y[0:10])
@@ -149,13 +151,7 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=6
-X, y= sequence(n_steps)
-print(X.shape)
-print(y.shape)
 
-x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
 
 space = {"layer1_output": hp.randint("layer1_output", 200),
          "layer2_output": hp.randint("layer2_output", 200),
@@ -169,7 +165,8 @@ space = {"layer1_output": hp.randint("layer1_output", 200),
          "lr": hp.uniform('lr', 1e-9, 1e-3),
          "decay": hp.uniform('decay', 1e-9, 1e-3),
          'epochs': hp.randint('epochs', 250),
-         'batch_size': hp.randint('batch_size', 100)
+         'batch_size': hp.randint('batch_size', 100),
+         'time_step':hp.randint('time_step',13)
          }
 
 def argsDict_tranform(argsDict):
@@ -177,12 +174,18 @@ def argsDict_tranform(argsDict):
     argsDict['layer2_output'] = argsDict['layer2_output'] + 20
     argsDict['epochs'] = argsDict['epochs'] + 50
     argsDict['batch_size'] = argsDict['batch_size'] + 32
+    argsDict['time_step']=argsDict['time_step']+1
     return argsDict
 
 
 def GRU_training(argsDic):
     argsDic=argsDict_tranform(argsDic)
-    print(argsDic['batch_size'])
+    n_steps = argsDic['time_step']
+    X, Y = sequence(n_steps)
+    X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
     model=keras.models.Sequential()
     model.add(LayerNormalization())
     model.add(keras.layers.GRU(argsDic['layer1_output'], activation='relu', return_sequences=True, input_shape=(n_steps, 12),dropout=argsDic['layer1_dropout'], recurrent_dropout=argsDic['layer1_rdropout']))
@@ -195,14 +198,14 @@ def GRU_training(argsDic):
     model.compile(optimizer=adam, loss='mean_squared_error', metrics=['mae'])
     print('start training')
     model.fit(x_train_all,y_train_all, epochs=argsDic['epochs'], batch_size=argsDic['batch_size'], validation_split=0.2)
-    loss=get_tranformer_score(model)
+    loss=get_tranformer_score(model, x_predict, y_predict)
     if(loss==10):
         return {'loss':loss, 'status':STATUS_FAIL}
     #model.save('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/GRU.h5')
     else:
         return {'loss':loss, 'status':STATUS_OK}
 
-def get_tranformer_score(tranformer):
+def get_tranformer_score(tranformer,x_predict, y_predict):
     gru = tranformer
     prediction = gru.predict(x_predict)
     for i in prediction:
@@ -213,6 +216,12 @@ def get_tranformer_score(tranformer):
 
 def GRU_training_best(argsDic):
     argsDic=argsDict_tranform(argsDic)
+    n_steps = argsDic['time_step']
+    X, Y = sequence(n_steps)
+    X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
     model=keras.models.Sequential()
     model.add(LayerNormalization())
     model.add(keras.layers.GRU(argsDic['layer1_output'], activation='relu', return_sequences=True, input_shape=(n_steps, 12),dropout=argsDic['layer1_dropout'], recurrent_dropout=argsDic['layer1_rdropout']))
@@ -226,7 +235,17 @@ def GRU_training_best(argsDic):
     print('start training')
     model.fit(x_train_all,y_train_all, epochs=argsDic['epochs'], batch_size=argsDic['batch_size'], validation_split=0.2)
     model.save('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRU.h5')
-    return {'loss':get_tranformer_score(model), 'status':STATUS_OK}
+    time_start=time.time()
+    result=model.predict(x_predict)
+    time_end=time.time()
+    result = result * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
+    y_real = y_predict * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
+    print('totally cost', time_end - time_start)
+    print("rmse is ：", sqrt(mean_squared_error(y_real, result)))
+    print("mae is ：", mean_absolute_error(y_real, result))
+    print('r2 is :', r2_score(y_real, result))
+
+    return {'loss':get_tranformer_score(model, x_predict, y_predict), 'status':STATUS_OK}
 
 
 
@@ -235,49 +254,53 @@ def GRU_training_best(argsDic):
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=20)
 best = fmin(GRU_training, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+time_start=time.time()
 MSE = GRU_training_best(best)
+time_end=time.time()
+print('training cost is: ', time_end-time_start)
 print('best :', best)
 print('best param after transform :')
 print(argsDict_tranform(best))
 print('\nrmse of the best gru:', np.sqrt(MSE['loss']))
-xs0 = [t['misc']['vals']['lr'][0] for t in trials.trials]
-xs1 = [t['misc']['vals']['decay'][0] for t in trials.trials]
-xs2 = [t['misc']['vals']['layer1_output'][0] for t in trials.trials]
-xs3=[t['misc']['vals']['layer2_output'][0] for t in trials.trials]
+# xs0 = [t['misc']['vals']['lr'][0] for t in trials.trials]
+xs0 = [t['misc']['vals']['time_step'][0] for t in trials.trials]
+# xs1 = [t['misc']['vals']['decay'][0] for t in trials.trials]
+# xs2 = [t['misc']['vals']['layer1_output'][0] for t in trials.trials]
+# xs3=[t['misc']['vals']['layer2_output'][0] for t in trials.trials]
 ys=[t['result']['loss'] for t in trials.trials]
+#
+# plt.figure()
+# plt.scatter(xs0, ys,  s=20, color='darkorange', linewidth=0.01, alpha=0.75, label='time_step')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('time_step')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()
 
-plt.figure()
-plt.scatter(xs0, ys,  s=20, color='darkorange', linewidth=0.01, alpha=0.75, label='learning rate')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('learning rate')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
-
-plt.figure()
-plt.scatter(xs1, ys, s=20,  color='r',linewidth=0.01, alpha=0.75, label='decay')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('decay')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
-
-plt.figure()
-plt.scatter(xs2, ys, s=20, color='blue', linewidth=0.01, alpha=0.75, label='layer1_output')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('layer1_output')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
-
-plt.figure()
-plt.scatter(xs3, ys, s=20, color='g', linewidth=0.01, alpha=0.75, label='layer2_output')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('layer2_output')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
+# plt.figure()
+# plt.scatter(xs1, ys, s=20,  color='r',linewidth=0.01, alpha=0.75, label='decay')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('decay')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()
+#
+# plt.figure()
+# plt.scatter(xs2, ys, s=20, color='blue', linewidth=0.01, alpha=0.75, label='layer1_output')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('layer1_output')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()
+#
+# plt.figure()
+# plt.scatter(xs3, ys, s=20, color='g', linewidth=0.01, alpha=0.75, label='layer2_output')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('layer2_output')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()

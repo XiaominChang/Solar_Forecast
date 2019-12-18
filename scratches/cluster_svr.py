@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.svm import SVR
 #from sklearn.linear_model import LinearSVR as SVR
 import matplotlib.pyplot as plt
-from hyperopt import fmin, tpe, hp, partial, Trials,STATUS_OK
+from hyperopt import fmin, tpe, hp, partial, Trials,STATUS_OK, STATUS_FAIL
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import xgboost as xgb
@@ -14,7 +14,7 @@ import pandas as pd
 import time
 from math import sqrt
 from sklearn.metrics import mean_squared_error, zero_one_loss,mean_absolute_error,r2_score
-
+import math
 '''def dataReader0000():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
@@ -102,7 +102,14 @@ x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, te
 # print(X.shape)
 # print(y.shape)
 
-
+pdata=pd.read_csv('/home/xcha8737/Downloads/cap/dataclean/grnnlabels_4.csv')
+data=np.array(pdata)
+X=data[:,:-1]
+Y=data[:,-1]
+X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
 
 #
 # x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
@@ -114,11 +121,11 @@ x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, te
 #x_train=pd.DataFrame(x_train,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
 #x_test=pd.DataFrame(x_test,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith","azimuth", "cloud_opacity"])
 
-# space = {'C': hp.uniform('C', 0, 10.0),
-#         'kernel': hp.choice('kernel', ['rbf']),
-#         'gamma': hp.uniform('gamma', 0, 20.0),
-#         'degree': hp.randint('degree', 20)
-#         }
+space = {'C': hp.uniform('C', 0, 10.0),
+        'kernel': hp.choice('kernel', ['rbf']),
+        'gamma': hp.uniform('gamma', 0, 20.0),
+        'degree': hp.randint('degree', 20)
+        }
 '''def SVRtrain(argsDic):
     print(argsDic['kernel'])
     argsDic['kernel']='rbf'
@@ -148,8 +155,8 @@ def SVRtrain_best(argsDic):
         svr.fit(x_train_all, y_train_all)
     joblib.dump(svr, '/home/xcha8737/Solar_Forecast/model_svr.pkl')
     return {'loss': get_tranformer_score(svr), 'status': STATUS_OK}'''
-space = {'std': hp.uniform('std', 0.1, 1.0),
-         'time_step':hp.randint('time_step',13)}
+# space = {'std': hp.uniform('std', 0.1, 1.0),
+#          'time_step':hp.randint('time_step',13)}
 
 
 def argsDict_tranform(argsDict):
@@ -157,32 +164,35 @@ def argsDict_tranform(argsDict):
     return argsDict
 
 def SVRtrain(argsDic):
-    argsDic=argsDict_tranform(argsDic)
-    n_steps = argsDic['time_step']
-    X, Y = sequence(n_steps)
-    X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-    y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
-    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
-    #svr = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
-    svr = SVR(kernel='rbf', C=1.862, gamma=0.0180, verbose=True)
+    # argsDic=argsDict_tranform(argsDic)
+    # n_steps = argsDic['time_step']
+    # X, Y = sequence(n_steps)
+    # X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    # y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+    # x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+    # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+    svr = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
+    # svr = SVR(kernel='rbf', C=1.862, gamma=0.0180, verbose=True)
     svr.fit(x_train_all, y_train_all)
     loss=get_tranformer_score(svr, x_predict, y_predict, Y)
-    return {'loss': loss, 'status': STATUS_OK}
-
+    if(loss==10):
+        return {'loss':loss, 'status':STATUS_FAIL}
+    #model.save('/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/GRU.h5')
+    else:
+        return {'loss':loss, 'status':STATUS_OK}
 
 def SVRtrain_best(argsDic):
-    argsDic=argsDict_tranform(argsDic)
-    n_steps = argsDic['time_step']
-    X, Y = sequence(n_steps)
-    X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-    y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
-    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
-    #svr = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
-    model = SVR(kernel='rbf', C=1.862, gamma=0.0180, verbose=True)
+    # argsDic=argsDict_tranform(argsDic)
+    # n_steps = argsDic['time_step']
+    # X, Y = sequence(n_steps)
+    # X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    # y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+    # x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+    # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+    model = SVR(kernel='rbf', C=argsDic['C'], gamma=argsDic['gamma'],verbose=True)
+    # model = SVR(kernel='rbf', C=1.862, gamma=0.0180, verbose=True)
     model.fit(x_train_all, y_train_all)
-    joblib.dump(model,'/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr.pkl')
+    joblib.dump(model,'/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr005.pkl')
     time_start=time.time()
     result=model.predict(x_predict)
     time_end=time.time()
@@ -200,6 +210,10 @@ def SVRtrain_best(argsDic):
 def get_tranformer_score(tranformer,x_predict,y_predict, Y):
     svr = tranformer
     result=svr.predict(x_predict)
+    for i in result:
+        if math.isnan(i):
+            print('nan number is found')
+            return 10
     result = result * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
     y_real = y_predict * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
 
@@ -208,7 +222,7 @@ def get_tranformer_score(tranformer,x_predict,y_predict, Y):
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=20)
-best = fmin(SVRtrain, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(SVRtrain, space, algo=algo, max_evals=500, pass_expr_memo_ctrl=None, trials=trials)
 print('best :', best)
 time_start=time.time()
 MSE = SVRtrain_best(best)

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from hyperopt import fmin, tpe, hp, partial, Trials, STATUS_OK
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import mean_squared_error, zero_one_loss
+from sklearn.metrics import mean_squared_error, zero_one_loss,r2_score
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 import xgboost as xgb
@@ -15,6 +15,9 @@ import dill
 import datetime
 import random
 from keras_layer_normalization import LayerNormalization
+import lightgbm as lgb
+import time
+import pandas as pd
 
 
 
@@ -71,24 +74,28 @@ def dataReader():
     #print(np.shape(output))
     return np.array(input), np.array(output)'''
 
-X,Y=dataReader()
+'''X,Y=dataReader()
+X1=X
 X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
 print(X.shape)
 xgboost=xgb.Booster()
-f=open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN.dill', 'rb')
-xgboost.load_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost.model')
-grnn=dill.load(f)
-#gru=keras.models.load_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRU.h5')
-svr=joblib.load('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr.pkl')
+#f=open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN.dill', 'rb')
+#xgboost.load_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost.model')
 
-x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+xgboost.load_model('/home/xcha8737/env/vagrant_cluster/Forecast/xgboost_para.model')
+#grnn=dill.load(f)
+#gru=keras.models.load_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/GRU.h5')
+#svr=joblib.load('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/model_svr.pkl')
+
+x_train_all, x_predict, y_train_all, y_predict = train_test_split(X1, Y, test_size=0.10, random_state=100)
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
-#dpredict = xgb.DMatrix(x_predict)
+dpredict = xgb.DMatrix(x_predict)
 #n=y_predict.size
-x_predict=X[53:102]
-y_predict=Y[53:102]
-print(y_predict.shape)
+#x_predict=X[53:102]
+#x_predict=x_predict*((X1.max(axis=0) - X1.min(axis=0)))+X1.min(axis=0)
+#y_predict=Y[53:102]
+print(y_predict.shape)'''
 
 '''def sequence():
     X,Y=dataReader()
@@ -136,13 +143,67 @@ plt.savefig('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/ls
 
 plt.show()'''
 
+# data=pd.read_csv("/home/xcha8737/Desktop/test_data/all_data.csv")
+# X=data[["airtemp", "humidity", "insolation", "windspeed", "winddirection"]]
+# #X=data[["airtemp", "humidity", "insolation"]]
+# Y=data['power (W)']
+
+xgboost=xgb.Booster()
+xgboost.load_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost.model')
+
+
+x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, Y, test_size=0.10, random_state=100)
+
+x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+
+#lgbm=lgb.Booster(model_file='/home/xcha8737/env/vagrant_cluster/Forecast/LightGBM_model_parallel2.txt')
+#lgbm=lgb.Booster(model_file='/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GBMmodel_test1100.txt')
+dpredict = lgb.Dataset(x_predict)
+time_start=time.time()
+#result1=lgbm.predict(x_predict)
+result1=xgboost.predict(dpredict)
+time_end=time.time()
+#result1=result1*((Y.max(axis=0) - Y.min(axis=0)))+Y.min(axis=0)
+#y_predict=y_predict*((Y.max(axis=0) - Y.min(axis=0)))+Y.min(axis=0)
+print(mean_squared_error(y_predict, result1))
+print(mean_absolute_error(y_predict, result1))
+print(np.sqrt(mean_squared_error(y_predict, result1)))
+print(r2_score(y_predict,result1))
+print('totally cost',time_end-time_start)
+
+'''x=[i for i in range(49)]
+x_ticks=np.arange(0,49, 6)
+#x_name=['0am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm',"0am" ]
+x_name=['0am','3am','6am','9am','12pm', '3pm' , '6pm', '9pm', '0am' ]
+
+
+plt.figure()
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
+plt.scatter(x, result1, color='red', linewidth=0.01, alpha=0.75, label='predicton')
+plt.scatter(x, y_predict,  color='blue', linewidth=0.01, alpha=0.75, label='actual')
+#plt.plot(x, Y[1:50],  color='blue', label='actual')
+plt.grid(True, linestyle='--', linewidth=0.5)
+plt.xlabel('Time', fontweight='semibold', fontsize='large')
+plt.ylabel('PV output (W)', fontweight='semibold',fontsize='large')
+plt.xlim((0,49))
+plt.xticks(x_ticks, x_name,  fontweight='semibold')
+plt.yticks(fontweight='semibold')
+
+plt.legend(loc="upper right")
+
+
+
+
+plt.savefig('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost_result.pdf',format = 'pdf', dpi = 1000, bbox_inches = 'tight')
+
+plt.show()'''
 
 
 
 
 
-
-dpredict = xgb.DMatrix(x_predict)
+'''dpredict = xgb.DMatrix(x_predict)
 
 result1=xgboost.predict(dpredict)
 result2=grnn.predict(x_predict)
@@ -222,7 +283,7 @@ print(mean_squared_error(y_predict, result1))
 
 plt.savefig('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/svr_result.pdf',format = 'pdf', dpi = 1000, bbox_inches = 'tight')
 
-plt.show()
+plt.show()'''
 
 '''result2=grnn.predict(x_predict)
 print(result2.shape)

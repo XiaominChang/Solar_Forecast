@@ -71,21 +71,43 @@ def sequence( n_steps):
     return np.array(input), np.array(output)
 #n_steps=1
 #X, y= sequence(n_steps)
-X,Y=dataReader()
-X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
-print(X.shape)
-print(y.shape)
+#X,Y=dataReader()
+#X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+#y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
 
-print(st.pearsonr(X[:, 0],Y))
-print(st.pearsonr(X[:, 1],Y))
-print(st.pearsonr(X[:, 2],Y))
-print(st.pearsonr(X[:, 3],Y))
-print(st.pearsonr(X[:, 4],Y))
-print(st.pearsonr(X[:, 5],Y))
-print(st.pearsonr(X[:, 6],Y))
-print(st.pearsonr(X[:, 7],Y))
-print(st.pearsonr(X[:, 8],Y))
-print(st.pearsonr(X[:, 9],Y))
-print(st.pearsonr(X[:, 10],Y))
-print(st.pearsonr(X[:, 11],Y))
+
+
+
+
+#data=pd.read_csv("/home/xcha8737/Downloads/Training_data/test.csv")
+#X=data[["AirTemp", "Azimuth","CloudOpacity", "DewpointTemp", "Dhi", "Dni", "Ebh", "Ghi", "PrecipitableWater", "RelativeHumidity", "SurfacePressure", "WindDirection10m","WindSpeed10m", "Zenith"]]
+#Y=data['PV_output']
+
+data=pd.read_csv("/home/xcha8737/Desktop/test_data/all_data.csv")
+X=data[["airtemp", "humidity", "insolation", "windspeed", "winddirection"]]
+Y=data['power (W)']
+
+print("airtemp: ",st.pearsonr(X["airtemp"],Y))
+print("humidity: ",st.pearsonr(X["humidity"],Y))
+print("insolation: ",st.pearsonr(X["insolation"],Y))
+print("windspeed: ",st.pearsonr(X["windspeed"],Y))
+print("winddirection: ",st.pearsonr(X["winddirection"],Y))
+
+
+
+
+
+'''print("AirTemp",st.pearsonr(X["AirTemp"],Y))
+print("Azimuth",st.pearsonr(X["Azimuth"],Y))
+print("CloudOpacity",st.pearsonr(X["CloudOpacity"],Y))
+print("DewpointTemp",st.pearsonr(X["DewpointTemp"],Y))
+print(st.pearsonr(X["Dhi"],Y))
+print(st.pearsonr(X["Dni"],Y))
+print(st.pearsonr(X["Ebh"],Y))
+print(st.pearsonr(X["Ghi"],Y))
+print(st.pearsonr(X["PrecipitableWater"],Y))
+print(st.pearsonr(X["RelativeHumidity"],Y))
+print(st.pearsonr(X["SurfacePressure"],Y))
+print(st.pearsonr(X["WindDirection10m"],Y))
+print(st.pearsonr(X["WindSpeed10m"],Y))
+print(st.pearsonr(X["Zenith"],Y))'''

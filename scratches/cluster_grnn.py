@@ -5,10 +5,10 @@ import csv
 import dill
 import math
 from math import sqrt
-import keras
+#import keras
 import os
-from keras_layer_normalization import LayerNormalization
-from loss import LossHistory
+#from keras_layer_normalization import LayerNormalization
+#from loss import LossHistory
 from sklearn.utils import shuffle
 from hyperopt import fmin, tpe, hp, partial, Trials, STATUS_OK, STATUS_FAIL
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -73,10 +73,10 @@ def sequence( n_steps):
     return np.array(input,dtype=np.float32), np.array(output,dtype=np.float32)
 
 
-# n_steps=9
-# X, Y= sequence(n_steps)
-# X=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
-# y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
+n_steps=8
+X, Y= sequence(n_steps)
+X=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
 '''X,Y=dataReader()
 X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
@@ -91,9 +91,9 @@ print(y.shape)'''
 # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
 
 
-# x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-#
-# x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+
+x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
 
 # x_train_all=pd.DataFrame(x_train_all,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
 # x_predict=pd.DataFrame(x_predict,columns=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"])
@@ -111,6 +111,14 @@ print(y.shape)'''
 #
 # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.90, random_state=100)
 
+# pdata=pd.read_csv('/home/xcha8737/Downloads/cap/dataclean/grnnlabels_4.csv')
+# data=np.array(pdata)
+# X=data[:,:-1]
+# Y=data[:,-1]
+# X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+# y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+# x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+# x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
 
 space = {'std': hp.uniform('std', 0.1, 1.0),
          'time_step':hp.randint('time_step',13)}
@@ -122,15 +130,15 @@ def argsDict_tranform(argsDict):
 
 def GRNNtrain(argsDic):
     argsDic=argsDict_tranform(argsDic)
-    n_steps = argsDic['time_step']
-    X, Y = sequence(n_steps)
-    X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-    y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
-    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+    # n_steps = argsDic['time_step']
+    # X, Y = sequence(n_steps)
+    # X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    # y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+    # x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+    # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
     print('std value is:', argsDic['std'])
-    # model=algorithms.GRNN(std=argsDic['std'], verbose=True)
-    model=algorithms.GRNN(std=0.503, verbose=True)
+    model=algorithms.GRNN(std=argsDic['std'], verbose=True)
+    # model=algorithms.GRNN(std=0.503, verbose=True)
     model.train(x_train_all,y_train_all)
     loss=get_tranformer_score(model, x_predict, y_predict, Y)
     if(loss==10):
@@ -142,20 +150,20 @@ def GRNNtrain(argsDic):
 
 
 def GRNNtrain_best(argsDic):
-    argsDic=argsDict_tranform(argsDic)
-    n_steps = argsDic['time_step']
-    X, Y = sequence(n_steps)
-    X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-    y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
-    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
-    # model=algorithms.GRNN(std=argsDic['std'], verbose=True)
-    model=algorithms.GRNN(std=0.503, verbose=True)
+    # argsDic=argsDict_tranform(argsDic)
+    # n_steps = argsDic['time_step']
+    # X, Y = sequence(n_steps)
+    # X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    # y = (Y - Y.min(axis=0)) / (Y.max(axis=0) - Y.min(axis=0))
+    # x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+    # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+    model=algorithms.GRNN(std=argsDic['std'], verbose=True)
+    #model=algorithms.GRNN(std=0.503, verbose=True)
     model.train(x_train_all,y_train_all)
 
     #shap_value = shap.KernelExplainer(model.predict(), x_train_all).shap_values(x_train_all)
     #shap.summary_plot(shap_value, x_train_all, plot_type="bar")
-    with open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/GRNN1.dill1', 'wb') as f:
+    with open('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/grnn_test.dill', 'wb') as f:
         dill.dump(model,f)
     time_start=time.time()
     result=model.predict(x_predict)
@@ -184,7 +192,7 @@ def get_tranformer_score(tranformer,x_predict,y_predict,Y):
 
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=20)
-best = fmin(GRNNtrain, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+best = fmin(GRNNtrain, space, algo=algo, max_evals=500, pass_expr_memo_ctrl=None, trials=trials)
 print('best :', best)
 time_start=time.time()
 MSE = GRNNtrain_best(best)
@@ -212,4 +220,4 @@ print('rmse of the best svr:', MSE['loss'])
 # plt.ylabel('loss')
 # plt.legend(loc="upper right")
 # plt.show()
-#
+
