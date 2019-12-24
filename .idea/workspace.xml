@@ -39,8 +39,8 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.mixedModel">
-    <configuration name="GRUforecast" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager" selected="Python.dataPre">
+    <configuration name="dataPre" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Solar_Forecast1" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -52,7 +52,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratches/GRUforecast.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratches/dataPre.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -61,7 +61,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="SVRforecast" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="interpretability" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Solar_Forecast1" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -73,7 +73,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratches/SVRforecast.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratches/interpretability.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -147,11 +147,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.mixedModel" />
+        <item itemvalue="Python.dataPre" />
+        <item itemvalue="Python.interpretability" />
         <item itemvalue="Python.xgboost_train" />
+        <item itemvalue="Python.mixedModel" />
         <item itemvalue="Python.test" />
-        <item itemvalue="Python.SVRforecast" />
-        <item itemvalue="Python.GRUforecast" />
       </list>
     </recent_temporary>
   </component>

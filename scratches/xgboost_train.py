@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+import graphviz
 '''def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
@@ -251,6 +252,8 @@ def xgbest_train(argsDict):
     xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
     loss=get_tranformer_score(xrf)
     xrf.save_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/xgboost_test.model')
+    xgb.plot_tree(xrf, num_trees=5)
+    plt.show()
     return {'loss': loss, 'status': STATUS_OK}
 
 
