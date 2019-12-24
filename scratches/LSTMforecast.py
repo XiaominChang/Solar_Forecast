@@ -10,10 +10,11 @@ from loss import LossHistory
 from sklearn.utils import shuffle
 from hyperopt import fmin, tpe, hp, partial, Trials, STATUS_OK, STATUS_FAIL
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import mean_squared_error, zero_one_loss
+from sklearn.metrics import mean_squared_error, zero_one_loss, r2_score, mean_absolute_error
 import matplotlib.pyplot as plt
-
-
+import time
+from math import sqrt
+from sklearn.metrics import mean_squared_error, zero_one_loss,mean_absolute_error,r2_score
 
 # model itself
 #from keras.models import Sequential
@@ -23,63 +24,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 history = LossHistory()
-'''def dataReader():
-    file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
-    reader=csv.reader(file)
-    features=[]
-    output=[]
-    for row in reader:
-        feature=[]
-        #feature.append(row[1])
-        #feature.append(row[2])
-        feature.append(float(row[3]))
-        feature.append(float(row[4]))
-        feature.append(float(row[5]))
-        feature.append(float(row[6]))
-        feature.append(float(row[7]))
-        feature.append(float(row[8]))
-        features.append(feature)
-        #features.append(row[4:9])
-        output.append(float(row[3]))
-    file.close()
-    sep_in=[]
-    sep_out=[]
-    oct_in=[]
-    oct_out=[]
-    Nov_in=[]
-    Nov_out=[]
-    Dec_in=[]
-    Dec_out=[]
-    i=7416
-    #print(features[0])
-    while(i>-1):
-        sep_in.append(features[i])
-        sep_out.append(output[i])
-        i-=1
-    i=16237
-    while(i>7416):
-        oct_in.append(features[i])
-        oct_out.append(output[i])
-        i-=1
-    i=24521
-    while(i>16237):
-        Nov_in.append(features[i])
-        Nov_out.append(output[i])
-        i-=1
-    i=len(features)-1
-    while(i>24521):
-        Dec_in.append(features[i])
-        Dec_out.append(output[i])
-        i-=1
-    input=sep_in + oct_in + Nov_in + Dec_in
-    output=sep_out+ oct_out +Nov_out+ Dec_out
-    #print(len(input))
-    #print(len(output))
-    X=np.array(input)
-    Y=np.array(output)
-    #print(X[0])
-    #print(Y[0])
-    return X, Y'''
+
 def dataReader():
     file=open("/home/xcha8737/Downloads/cap/dataclean/all_data.csv", 'r', encoding='utf-8' )
     reader=csv.reader(file)
@@ -112,11 +57,11 @@ def dataReader():
 
 
 def sequence( n_steps):
-    X,Y=dataReader()
-    print(X.shape)
-    print(Y.shape)
-    x=(X-X.mean(axis=0))/X.std(axis=0)
-    y=(Y-Y.mean(axis=0))/Y.std(axis=0)
+    x,y=dataReader()
+    # print(X.shape)
+    # print(Y.shape)
+    # x=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+    # y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
     input, output=list(), list()
     #print(x[0:10])
     #print(y[0:10])
@@ -130,13 +75,10 @@ def sequence( n_steps):
     #print(np.shape(input))
     #print(np.shape(output))
     return np.array(input), np.array(output)
-n_steps=4
-
-X, y= sequence(n_steps)
-print(X.shape)
-print(y.shape)
-y.reshape(-1,1)
-print(y.shape)
+n_steps=12
+X, Y= sequence(n_steps)
+X=(X-X.min(axis=0))/(X.max(axis=0)-X.min(axis=0))
+y=(Y-Y.min(axis=0))/(Y.max(axis=0)-Y.min(axis=0))
 
 x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
 x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
@@ -179,6 +121,7 @@ def GRU_training(argsDic):
     model.compile(optimizer=adam, loss='mean_squared_error', metrics=['mae'])
     print('start training')
     model.fit(x_train_all,y_train_all, epochs=argsDic['epochs'], batch_size=argsDic['batch_size'], validation_split=0.2)
+    #model.fit(x_train_all, y_train_all, epochs=1, batch_size=argsDic['batch_size'],validation_split=0.2)
     loss=get_tranformer_score(model)
     if(loss==10):
         return {'loss':loss, 'status':STATUS_FAIL}
@@ -209,7 +152,31 @@ def GRU_training_best(argsDic):
     model.compile(optimizer=adam, loss='mean_squared_error', metrics=['mae'])
     print('start training')
     model.fit(x_train_all,y_train_all, epochs=argsDic['epochs'], batch_size=argsDic['batch_size'], validation_split=0.2)
-    model.save('/home/xcha8737/Downloads/cap/dataclean/LSTM.h5')
+    time_start=time.time()
+    result=model.predict(x_predict)
+    time_end=time.time()
+    result = result * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
+    y_real = y_predict * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
+    print('totally cost', time_end - time_start)
+    print("rmse is ：", sqrt(mean_squared_error(y_real, result)))
+    print("mae is ：", mean_absolute_error(y_real, result))
+    print('r2 is :', r2_score(y_real, result))
+
+    '''time_start = time.time()
+    result4 = model.predict(x_predict)
+    time_end = time.time()
+    result4 = result4.reshape(-1, 1)
+    result4 = result4 * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
+    y_test1=y_predict
+    y_test1 = y_test1 * ((Y.max(axis=0) - Y.min(axis=0))) + Y.min(axis=0)
+    print(mean_squared_error(y_test1, result4))
+    print(mean_absolute_error(y_test1, result4))
+    print(np.sqrt(mean_squared_error(y_test1, result4)))
+    print(r2_score(y_test1, result4))
+    print('totally cost', time_end - time_start)'''
+
+
+    model.save('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/LSTM.h5')
     return {'loss':get_tranformer_score(model), 'status':STATUS_OK}
 
 
@@ -219,49 +186,53 @@ def GRU_training_best(argsDic):
 trials = Trials()
 algo = partial(tpe.suggest, n_startup_jobs=20)
 best = fmin(GRU_training, space, algo=algo, max_evals=100, pass_expr_memo_ctrl=None, trials=trials)
+
+time_start=time.time()
 MSE = GRU_training_best(best)
+time_end=time.time()
+print('training cost is: ', time_end-time_start)
 print('best :', best)
 print('best param after transform :')
 print(argsDict_tranform(best))
 print('\nrmse of the best gru:', np.sqrt(MSE['loss']))
 print ('trials:')
-xs0 = [t['misc']['vals']['lr'][0] for t in trials.trials]
-xs1 = [t['misc']['vals']['decay'][0] for t in trials.trials]
-xs2 = [t['misc']['vals']['layer1_output'][0] for t in trials.trials]
-xs3=[t['misc']['vals']['layer2_output'][0] for t in trials.trials]
-ys=[t['result']['loss'] for t in trials.trials]
-
-plt.figure()
-plt.scatter(xs0, ys,  s=20, color='darkorange', linewidth=0.01, alpha=0.75, label='learning rate')
-plt.grid(True)
-plt.xlabel('learning rate')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
-
-plt.figure()
-plt.scatter(xs1, ys, s=20,  color='r',linewidth=0.01, alpha=0.75, label='decay')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('decay')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
-
-plt.figure()
-plt.scatter(xs2, ys, s=20, color='blue', linewidth=0.01, alpha=0.75, label='layer1_output')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('layer1_output')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
-
-plt.figure()
-plt.scatter(xs3, ys, s=20, color='g', linewidth=0.01, alpha=0.75, label='layer2_output')
-#plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
-plt.grid(True)
-plt.xlabel('layer2_output')
-plt.ylabel('loss')
-plt.legend(loc="upper right")
-plt.show()
+# xs0 = [t['misc']['vals']['lr'][0] for t in trials.trials]
+# xs1 = [t['misc']['vals']['decay'][0] for t in trials.trials]
+# xs2 = [t['misc']['vals']['layer1_output'][0] for t in trials.trials]
+# xs3=[t['misc']['vals']['layer2_output'][0] for t in trials.trials]
+# ys=[t['result']['loss'] for t in trials.trials]
+#
+# plt.figure()
+# plt.scatter(xs0, ys,  s=20, color='darkorange', linewidth=0.01, alpha=0.75, label='learning rate')
+# plt.grid(True)
+# plt.xlabel('learning rate')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()
+#
+# plt.figure()
+# plt.scatter(xs1, ys, s=20,  color='r',linewidth=0.01, alpha=0.75, label='decay')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('decay')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()
+#
+# plt.figure()
+# plt.scatter(xs2, ys, s=20, color='blue', linewidth=0.01, alpha=0.75, label='layer1_output')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('layer1_output')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()
+#
+# plt.figure()
+# plt.scatter(xs3, ys, s=20, color='g', linewidth=0.01, alpha=0.75, label='layer2_output')
+# #plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
+# plt.grid(True)
+# plt.xlabel('layer2_output')
+# plt.ylabel('loss')
+# plt.legend(loc="upper right")
+# plt.show()

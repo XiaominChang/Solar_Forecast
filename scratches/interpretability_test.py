@@ -104,39 +104,10 @@ svr=joblib.load('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclea
 #xgb.plot_importance(xgboost)
 #xgb.plot_tree(xgboost)
 #plt.show()
-pdf=PdfPages('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/shap_grnn.pdf')
-#xgboost.feature_names=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"]
-
-#xgb.plot_importance(xgboost, importance_type="cover", show_values=False,xlabel='Score').set_yticklabels(['air_temp', 'dni', 'cloud_opacity', 'ebh', 'zenith', 'ghi10', 'dni10', 'dni90','ghi90', 'dhi', 'azimuth',  'ghi'])
-#xgb.plot_importance(xgboost, importance_type="gain", show_values=False,xlabel='Score').set_yticklabels(['air_temp', 'dni', 'cloud_opacity', 'dni10', 'zenith', 'azimuth', 'dhi','dni90', 'ghi90', 'ebh', 'ghi10', 'ghi'])
-
+pdf=PdfPages('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/shap2.pdf')
 shap_value = shap.TreeExplainer(xgboost).shap_values(x_train_all)
-#fig=xgb.plot_importance(xgboost, importance_type="cover", show_values=False, xlabel='Score')
-#fig.set_yticklabels=(['ghi', 'ghi10','ebh','ghi90','dni90','dhi','azimuth', 'zenith', 'dni10','cloud_opacity', 'dni', 'air_temp'])
-
-#shap_value=shap.KernelExplainer(grnn.predict, x_predict).shap_values(x_test)
-shap.summary_plot(shap_value, x_train_all,  show=False)
-plt.grid()
-plt.yticks(fontweight="semibold")
-plt.xticks(fontweight="semibold")
-#axis_cur=plt.sca(ax)
-#shap.summary_plot(shap_value, x_train_all, show=False,auto_size_plot=True, plot_type='bar')
-#axis_cur=plt.sca()
-fig=plt.gcf()
-#a=["ghi", "ghi90","ghi10", "ebh", "dni", "dni10", "dni90", "dhi", "air_temp", "zenith", "azimuth", "cloud_opacity"]
-#axis_cur=fig.axes
-#front={'weight': 'normal', 'size':14}
-
-#fig.set_xticklabels(fontweight="bold")
-#fig.set_size_inches(14, 8)
-plt.savefig('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost_SHA.pdf',format = 'pdf', dpi = 1000, bbox_inches = 'tight')
-#plt.tick_params()
-plt.show()
-
-
-
-
-#shap_value=shap.KernelExplainer(svr.predict, x_train_all).shap_values(x_train_all)
+shap.summary_plot(shap_value, x_train_all, plot_type="bar")
+#shap_value=shap.KernelExplainer(svr.predict, x_predict).shap_values(x_train_all)
 #shap.summary_plot(shap_value, x_train_all, plot_type="bar")
 #fig=plt.gcf()
 #pdf.savefig(fig)

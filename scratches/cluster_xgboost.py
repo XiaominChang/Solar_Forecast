@@ -9,64 +9,6 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, zero_one_loss
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
-<<<<<<< HEAD
-import graphviz
-'''def dataReader():
-    file=open("/home/xcha8737/Solar_Forecast/trainning_data/SolarPrediction.csv/SolarPrediction.csv", 'r', encoding='utf-8' )
-    reader=csv.reader(file)
-    features=[]
-    output=[]
-    for row in reader:
-        feature=[]
-        #feature.append(row[1])
-        #feature.append(row[2])
-        feature.append(float(row[3]))
-        feature.append(float(row[4]))
-        feature.append(float(row[5]))
-        feature.append(float(row[6]))
-        feature.append(float(row[7]))
-        feature.append(float(row[8]))
-        features.append(feature)
-        #features.append(row[4:9])
-        output.append(float(row[3]))
-    file.close()
-    sep_in=[]
-    sep_out=[]
-    oct_in=[]
-    oct_out=[]
-    Nov_in=[]
-    Nov_out=[]
-    Dec_in=[]
-    Dec_out=[]
-    i=7416
-    print(features[0])
-    while(i>-1):
-        sep_in.append(features[i])
-        sep_out.append(output[i])
-        i-=1
-    i=16237
-    while(i>7416):
-        oct_in.append(features[i])
-        oct_out.append(output[i])
-        i-=1
-    i=24521
-    while(i>16237):
-        Nov_in.append(features[i])
-        Nov_out.append(output[i])
-        i-=1
-    i=len(features)-1
-    while(i>24521):
-        Dec_in.append(features[i])
-        Dec_out.append(output[i])
-        i-=1
-    input=sep_in + oct_in + Nov_in + Dec_in
-    output=sep_out+ oct_out +Nov_out+ Dec_out
-    print(len(input))
-    print(len(output))
-    X=np.array(input)
-    Y=np.array(output)
-    return X, Y
-=======
 import pandas as pd
 import graphviz
 import shap
@@ -100,7 +42,6 @@ def xgBoost():
     plt.show()'''
 
 
->>>>>>> 34beb87bdb3a8fc9d64b8c9a7a5a7e1852cb55f9
 
 def dataReader():
     file=open("/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/all_data.csv", 'r', encoding='utf-8' )
@@ -169,10 +110,14 @@ def sequence( n_steps):
 # X=data[["airtemp", "humidity", "insolation"]]
 # Y=data['power (W)']
 
-# pdata=pd.read_csv('/home/xcha8737/Downloads/cap/dataclean/labels_0.csv')
-# data=np.array(pdata)
-# X=data[:,:-1]
-# Y=data[:,-1]
+pdata=pd.read_csv('/home/xcha8737/Downloads/cap/dataclean/labels_11.csv')
+data=np.array(pdata)
+X=data[:,:-1]
+y=data[:,-1]
+
+x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
+x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
+
 
 # x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, Y, test_size=0.10, random_state=100)
 # x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
@@ -218,52 +163,48 @@ def argsDict_tranform(argsDict, isPrint=False):
 
 def xgboost_factory(argsDict):
     argsDict=argsDict_tranform(argsDict)
-    n_steps = argsDict['time_step']
-    X, Y = sequence(n_steps)
-    y=Y
-    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
     dtrain = xgb.DMatrix(data=x_train, label=y_train, missing=-999.0)
     dtest = xgb.DMatrix(data=x_test, label=y_test, missing=-999.0)
     evallist = [(dtrain, 'train'), (dtest, 'eval')]
 
-    # params = {'nthread': 4,
-    #           'max_depth': argsDict['max_depth'],
-    #           'n_estimators': argsDict['n_estimators'],
-    #           'eta': argsDict['learning_rate'],
-    #           'subsample': argsDict['subsample'],
-    #           'min_child_weight': argsDict['min_child_weight'],
-    #           'objective': 'reg:squarederror',
-    #           'verbosity': 0,
-    #           'gamma': argsDict['min_split_loss'],
-    #           'colsample_bytree': argsDict['colsample_bytree'],
-    #           'alpha': 0,
-    #           'lambda': argsDict['lambda'],
-    #           'scale_pos_weight': 0,
-    #           'seed': 100,
-    #           'missing': -999,
-    #           "booster" : 'gbtree'
-    #           }
     params = {'nthread': 4,
-              'max_depth': 13,
-              'n_estimators': 291,
-              'eta': 0.051,
-              'subsample': 0.215,
-              'min_child_weight': 16,
+              'max_depth': argsDict['max_depth'],
+              'n_estimators': argsDict['n_estimators'],
+              'eta': argsDict['learning_rate'],
+              'subsample': argsDict['subsample'],
+              'min_child_weight': argsDict['min_child_weight'],
               'objective': 'reg:squarederror',
               'verbosity': 0,
-              'gamma': 0.633,
-              'colsample_bytree': 0.894,
+              'gamma': argsDict['min_split_loss'],
+              'colsample_bytree': argsDict['colsample_bytree'],
               'alpha': 0,
-              'lambda': 0.1109,
+              'lambda': argsDict['lambda'],
               'scale_pos_weight': 0,
               'seed': 100,
               'missing': -999,
               "booster" : 'gbtree'
               }
+    # params = {'nthread': 4,
+    #           'max_depth': 13,
+    #           'n_estimators': 291,
+    #           'eta': 0.051,
+    #           'subsample': 0.215,
+    #           'min_child_weight': 16,
+    #           'objective': 'reg:squarederror',
+    #           'verbosity': 0,
+    #           'gamma': 0.633,
+    #           'colsample_bytree': 0.894,
+    #           'alpha': 0,
+    #           'lambda': 0.1109,
+    #           'scale_pos_weight': 0,
+    #           'seed': 100,
+    #           'missing': -999,
+    #           "booster" : 'gbtree'
+    #           }
     params['eval_metric'] = ['rmse']
 
-    xrf = xgb.train(params, dtrain, 291, evallist, early_stopping_rounds=10)
+    xrf = xgb.train(params, dtrain,argsDict['n_estimators'], evallist, early_stopping_rounds=10)
+    #xrf = xgb.train(params, dtrain, num_boost_round=argsDict['n_estimators'], evallist, early_stopping_rounds=10)
     loss=get_tranformer_score(xrf,x_predict,y_predict)
 
     return {'loss': loss, 'status': STATUS_OK}
@@ -279,64 +220,52 @@ def get_tranformer_score(tranformer,x_predict, y_predict):
 
 def xgbest_train(argsDict):
     argsDict=argsDict_tranform(argsDict)
-    n_steps = argsDict['time_step']
-    X, Y = sequence(n_steps)
-    y=Y
-    x_train_all, x_predict, y_train_all, y_predict = train_test_split(X, y, test_size=0.10, random_state=100)
-    x_train, x_test, y_train, y_test = train_test_split(x_train_all, y_train_all, test_size=0.2, random_state=100)
     dtrain = xgb.DMatrix(data=x_train, label=y_train, missing=-999.0)
     dtest = xgb.DMatrix(data=x_test, label=y_test, missing=-999.0)
     evallist = [(dtrain, 'train'), (dtest, 'eval')]
 
 
-    # params = {'nthread': 4,
-    #           'max_depth': argsDict['max_depth'],
-    #           'n_estimators': argsDict['n_estimators'],
-    #           'eta': argsDict['learning_rate'],
-    #           'subsample': argsDict['subsample'],
-    #           'min_child_weight': argsDict['min_child_weight'],
-    #           'objective': 'reg:squarederror',
-    #           'verbosity': 0,
-    #           'gamma': argsDict['min_split_loss'],
-    #           'colsample_bytree': argsDict['colsample_bytree'],
-    #           'alpha': 0,
-    #           'lambda': argsDict['lambda'],
-    #           'scale_pos_weight': 0,
-    #           'seed': 100,
-    #           'missing': -999,
-    #           "booster": 'gbtree'
-    #           }
     params = {'nthread': 4,
-              'max_depth': 13,
-              'n_estimators': 291,
-              'eta': 0.051,
-              'subsample': 0.215,
-              'min_child_weight': 16,
+              'max_depth': argsDict['max_depth'],
+              'n_estimators': argsDict['n_estimators'],
+              'eta': argsDict['learning_rate'],
+              'subsample': argsDict['subsample'],
+              'min_child_weight': argsDict['min_child_weight'],
               'objective': 'reg:squarederror',
               'verbosity': 0,
-              'gamma': 0.633,
-              'colsample_bytree': 0.894,
+              'gamma': argsDict['min_split_loss'],
+              'colsample_bytree': argsDict['colsample_bytree'],
               'alpha': 0,
-              'lambda': 0.1109,
+              'lambda': argsDict['lambda'],
               'scale_pos_weight': 0,
               'seed': 100,
               'missing': -999,
-              "booster" : 'gbtree'
+              "booster": 'gbtree'
               }
+    # params = {'nthread': 4,
+    #           'max_depth': 13,
+    #           'n_estimators': 291,
+    #           'eta': 0.051,
+    #           'subsample': 0.215,
+    #           'min_child_weight': 16,
+    #           'objective': 'reg:squarederror',
+    #           'verbosity': 0,
+    #           'gamma': 0.633,
+    #           'colsample_bytree': 0.894,
+    #           'alpha': 0,
+    #           'lambda': 0.1109,
+    #           'scale_pos_weight': 0,
+    #           'seed': 100,
+    #           'missing': -999,
+    #           "booster" : 'gbtree'
+    #           }
     params['eval_metric'] = ['rmse']
 
-<<<<<<< HEAD
-    xrf = xgb.train(params, dtrain, params['n_estimators'], evallist, early_stopping_rounds=100)
-    loss=get_tranformer_score(xrf)
-    xrf.save_model('C:/Users/chang/Documents/GitHub/dataclean/dataclean/xgboost_test.model')
-    xgb.plot_tree(xrf, num_trees=5)
-    plt.show()
-=======
 
 
-    xrf = xgb.train(params, dtrain, 291, evallist, early_stopping_rounds=10)
+    xrf = xgb.train(params, dtrain, argsDict['n_estimators'], evallist, early_stopping_rounds=10)
     loss=get_tranformer_score(xrf,x_predict,y_predict)
-    xrf.save_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost1.model')
+    xrf.save_model('/home/xcha8737/Solar_Forecast/trainning_data/dataclean/dataclean/xgboost0021.model')
     '''print(xrf.feature_names)
     xgb.plot_importance(xrf)
     plt.show()
@@ -353,7 +282,6 @@ def xgbest_train(argsDict):
     print("mae is ：", mean_absolute_error(y_predict, result))
     print('r2 is :', r2_score(y_predict, result))
 
->>>>>>> 34beb87bdb3a8fc9d64b8c9a7a5a7e1852cb55f9
     return {'loss': loss, 'status': STATUS_OK}
 
 
@@ -377,7 +305,7 @@ print('\nrmse of the best xgboost:', MSE['loss'])
 # xs2 = [t['misc']['vals']['max_depth'][0] for t in trials.trials]
 # xs3=[t['misc']['vals']['min_child_weight'][0] for t in trials.trials]
 # ys=[t['result']['loss'] for t in trials.trials]
-#
+
 # xs0 = [t['misc']['vals']['time_step'][0] for t in trials.trials]
 # ys=[t['result']['loss'] for t in trials.trials]
 # xs0=np.array(xs0)
